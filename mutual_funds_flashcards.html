@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AFM · Mutual Funds Flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    body {
+      background: #0A0F1E;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #root { height: 100%; }
+
+    /* Scrollbar hide */
+    ::-webkit-scrollbar { display: none; }
+
+    /* Card flip */
+    .card-area {
+      width: calc(100% - 40px);
+      margin: 0 20px;
+      height: 390px;
+      -webkit-perspective: 1200px;
+      perspective: 1200px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      -webkit-transition: -webkit-transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      border-radius: 20px;
+    }
+    .card.flipped {
+      -webkit-transform: rotateY(180deg);
+      transform: rotateY(180deg);
+    }
+    .face {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px;
+      padding: 22px 20px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid;
+      overflow: hidden;
+    }
+    .face-front {
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      border-color: #312e81;
+      justify-content: center;
+    }
+    .face-back {
+      background: linear-gradient(145deg, #0f1929 0%, #0c1a0f 100%);
+      border-color: #14532d;
+      -webkit-transform: rotateY(180deg);
+      transform: rotateY(180deg);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Filter scroll */
+    .filter-scroll {
+      display: flex;
+      gap: 6px;
+      padding: 0 20px;
+      overflow-x: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-scroll::-webkit-scrollbar { display: none; }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+
+    /* Prevent text selection on tap */
+    .no-select { -webkit-user-select: none; user-select: none; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const cards = [
+  // ── CONCEPT ──────────────────────────────────────────────────────────
+  { id:1, category:"Concept", difficulty:"Basic",
+    front:"What is a Mutual Fund?",
+    back:"A trust that pools savings of numerous investors sharing a common financial goal, managed by professional money managers who invest in capital market instruments (shares, debentures, bonds) and money-market instruments (CPs, CDs, T-Bills).\n\n📌 Net income + capital appreciation shared in proportion to units held.",
+    exam:false },
+  { id:2, category:"Concept", difficulty:"Basic",
+    front:"What are the 3 classifications of Mutual Funds?",
+    back:"1️⃣ Functional Classification\n→ Open-Ended, Close-Ended, Interval Funds\n\n2️⃣ Portfolio Classification\n→ Equity Funds, Debt Funds, Special Funds\n\n3️⃣ Ownership Classification\n→ Public Sector, Private Sector, Foreign MFs\n\n📌 Exam Tip: All 3 types are frequently asked as short theory.",
+    exam:false },
+  { id:3, category:"Concept", difficulty:"Basic",
+    front:"Differentiate: Open-Ended vs Close-Ended vs Interval Funds",
+    back:"🔓 Open-Ended: Enter/exit anytime. Unlimited capital. Redemption indefinite. Transact at NAV.\n\n🔒 Close-Ended: Entry only via NFO or stock exchange. Limited life. Exit via stock exchange or maturity. Traded like shares.\n\n⏱ Interval: Hybrid of both. Open for purchase/redemption at pre-specified intervals. NOT required to be listed. Maturity period NOT defined.\n\n📌 Interval ≠ Close-Ended because no mandatory listing + no defined maturity.",
+    exam:false },
+  { id:4, category:"Concept", difficulty:"Intermediate",
+    front:"Name the 3 types of Equity Funds and who they suit",
+    back:"📈 Growth Funds\n→ Long-term capital appreciation\n→ Best for: Long-term investors\n\n🚀 Aggressive Funds\n→ Super-normal returns via startups, IPOs, speculative shares\n→ Best for: Risk-takers\n\n💰 Income Funds\n→ Maximize current income via high-dividend stocks + high-yield MM instruments\n→ Best for: Investors seeking current income\n\n📌 Exam Tip: Match fund type to investor profile in MCQs.",
+    exam:false },
+  { id:5, category:"Concept", difficulty:"Intermediate",
+    front:"What are the 4 risks in Bond / Debt Funds?",
+    back:"1. 📉 Interest Rate Risk\nInverse relationship: ↑ interest rate → ↓ bond market value\n\n2. ❌ Credit Risk\nDefault in interest/principal payment. Higher risk for lower credit-rated companies.\n\n3. 🔁 Prepayment Risk\nEarly redemption by issuer (Callable Bonds) when interest rates fall.\n\n4. 🔄 Reinvestment Risk\nOn maturity in falling rate environment, proceeds reinvested at lower rate → reduces yield.\n\n📌 Prepayment and Reinvestment Risk are opposites in falling rate scenario.",
+    exam:false },
+  { id:6, category:"Concept", difficulty:"Intermediate",
+    front:"What is an Index Fund? How is it different from a Quant Fund?",
+    back:"📊 Index Fund\n→ Passively tracks benchmark index (e.g., NIFTY 50)\n→ Invests in same weightage as index stocks\n→ Low cost; Fund manager follows index\n\n🤖 Quant Fund\n→ Uses data-driven mathematical/statistical models\n→ Fund manager DESIGNS + MONITORS models\n→ Decisions based on model outcomes\n→ Eliminates human bias\n\n⚡ Key Difference: Index Fund Manager = no active decision. Quant Fund Manager = designs model.\n\n📌 Expense ratio of Quant funds < Actively managed funds.",
+    exam:false },
+  { id:7, category:"Concept", difficulty:"Intermediate",
+    front:"What is an ETF? How does it differ from open-ended MF?",
+    back:"📦 Exchange Traded Fund (ETF)\n→ Hybrid: features of listed stocks + index fund\n→ Listed on stock exchange\n→ Can be bought/sold ANY TIME during market hours\n→ No paperwork; buy like any stock via broker\n→ Low cost, tax efficient\n\n🆚 vs. Open-Ended MF:\n• Open-ended: transact at END-OF-DAY NAV\n• ETF: transact at REAL-TIME prices\n• ETF authorized participants act as market makers\n\nTypes: Index ETF, Commodity ETF, Bond ETF, Currency ETF\n\n📌 ETF = closed-end tradability + open-end valuation features.",
+    exam:false },
+  { id:8, category:"Concept", difficulty:"Intermediate",
+    front:"What is Side Pocketing in Mutual Funds?",
+    back:"🗂 Side Pocketing = Separation of risky/stressed assets from liquid assets in a fund.\n\nPurpose:\n✅ Protect liquid asset holders from distress selling\n✅ Lock stressed assets until recovery\n✅ NAV reflects only liquid asset value after side pocketing\n\nHow it works:\n→ When a security's rating falls, it's moved to 'side pocket'\n→ Remaining portfolio carries on normally\n\nReal Example: IL&FS crisis — funds wrote off IL&FS exposure.\n\n⚠️ Con: Can also be misused to deprive investors of genuine returns.\n\n📌 Common internationally; gaining prominence in India post-IL&FS.",
+    exam:false },
+  { id:9, category:"Concept", difficulty:"Intermediate",
+    front:"What is Tracking Error? What causes it?",
+    back:"📐 Tracking Error = Deviation of a fund's return from its benchmark index return\n\nFormula:\nTE = √[Σ(d - d̄)² / (n-1)]\nwhere d = differential return, d̄ = average differential return\n\nGoal: TE → 0 (perfect replication)\n\nCauses of Tracking Error:\n• Transaction costs\n• AMC fees\n• Fund expenses\n• Cash holdings\n• Sampling bias\n\n📌 Higher TE = Higher risk profile.\n📌 Mainly relevant for Passively Managed / Index Funds.",
+    exam:false },
+  { id:10, category:"Concept", difficulty:"Advanced",
+    front:"What are Direct Plans in Mutual Funds? Why do they outperform Regular Plans?",
+    back:"📋 Direct Plans (introduced by SEBI on 1 Jan 2013):\n→ Investor invests directly with AMC\n→ No distribution expenses, trail fees, or transaction charges\n→ Higher NAV compared to Regular Plan\n\nWhy Direct > Regular:\n→ Lower Total Expense Ratio (TER)\n→ The fee difference compounds over time\n→ Studies confirm Direct Plans outperform Regular Plans across almost all schemes\n\n📌 Before Jan 2013, even direct investors were tracked under regular plan NAV — no separate plans existed.",
+    exam:false },
+
+  // ── FORMULA ──────────────────────────────────────────────────────────
+  { id:11, category:"Formula", difficulty:"Basic",
+    front:"📐 NAV Formula — Write it completely",
+    back:"NAV = Net Assets of Scheme / No. of Units Outstanding\n\n──────────────────────────────\nNet Assets = Market Value of Investments\n  + Receivables\n  + Other Accrued Income\n  + Other Assets\n  − Accrued Expenses\n  − Other Payables\n  − Other Liabilities\n──────────────────────────────\n\n📌 KEY: NAV is calculated on 'mark-to-market' basis (use MARKET VALUE, not cost)\n📌 If market value not given → use book value\n📌 NAV changes DAILY",
+    exam:true },
+  { id:12, category:"Formula", difficulty:"Basic",
+    front:"📐 Return on Mutual Fund — Period Return Formula",
+    back:"r = [(NAVt − NAVt-1) + It + Gt] / NAVt-1\n\nWhere:\n• NAVt = NAV at end of period\n• NAVt-1 = NAV at start\n• It = Income/Dividend per unit\n• Gt = Capital Gain distribution per unit\n\n──────────────────────────────\nExample (ICAI):\nNAV₀ = ₹20, NAVt = ₹20.06\nDividend = ₹0.0375, Cap. Gain = ₹0.03\n\nr = (0.06 + 0.0375 + 0.03) / 20\n  = 0.1275 / 20 = 0.6375% monthly\n  = 7.65% p.a.\n\n📌 Annualize by × 12 (months) or × 365/days",
+    exam:true },
+  { id:13, category:"Formula", difficulty:"Intermediate",
+    front:"📐 Required MF Earnings Formula (when expenses given)",
+    back:"R₂ = [1 / (1 − Initial Expenses%)] × R₁ + Recurring Expenses%\n\nWhere:\n• R₁ = Investor's desired return\n• R₂ = MF needs to earn this\n\n──────────────────────────────\nExample (ICAI Practical Q1):\nR₁ = 16%, Initial exp = 5.5%, Recurring = 1.5%\n\nR₂ = [1/(1−0.055)] × 16% + 1.5%\n   = [1/0.945] × 16% + 1.5%\n   = 16.93% + 1.5%\n   = 18.43%\n\n──────────────────────────────\n📌 Logic: Initial expense reduces the investable amount, so fund must earn more to compensate.",
+    exam:true },
+  { id:14, category:"Formula", difficulty:"Basic",
+    front:"📐 Front-End Load (Entry Load) & Back-End Load (Exit Load) Formulas",
+    back:"🟢 Entry Load (Front-End):\nPOP = NAV / (1 − Front-end Load)\nor\nFront-end Load% = (POP − NAV) / NAV\n\n🔴 Exit Load (Back-End):\nRedemption Price = NAV / (1 + Back-end Load)\nor\nBack-end Load% = (NAV − Redemption Price) / NAV\n\n──────────────────────────────\nExample (ICAI Q2):\nNAV = ₹10, POP = ₹10.204\nFront-end = (10.204 − 10) / 10 = 2.04%\n\nRedemption = ₹9.80\nBack-end = (10 − 9.80) / 10 = 2.00%\n\n📌 Currently NO entry load charged in India.",
+    exam:true },
+  { id:15, category:"Formula", difficulty:"Advanced",
+    front:"📐 Sharpe, Treynor & Sortino Ratios — Formulas & Differences",
+    back:"📊 Sharpe Ratio = (Rp − Rf) / σp\n→ Uses TOTAL risk (std deviation)\n→ Suitable when portfolio is NOT fully diversified\n→ Higher = Better\n\n📊 Treynor Ratio = (Rp − Rf) / βp\n→ Uses SYSTEMATIC risk (Beta)\n→ Suitable for WELL-DIVERSIFIED portfolios\n→ Higher = Better\n\n📊 Sortino Ratio = (Rp − Rf) / Downside Deviation\n→ Variation of Sharpe\n→ Uses DOWNSIDE deviation only\n→ More relevant when returns are asymmetric\n\n──────────────────────────────\n📌 If both Sharpe & Treynor rank same → perfectly diversified fund.\nIf different rankings → some unsystematic risk exists.",
+    exam:true },
+  { id:16, category:"Formula", difficulty:"Advanced",
+    front:"📐 Jensen's Alpha — Formula & Interpretation",
+    back:"Jensen's Alpha (α) = Rp − [Rf + βp(Rm − Rf)]\n\nOR:\nα = Actual Return − CAPM Required Return\n\n──────────────────────────────\nInterpretation:\n✅ α > 0: Fund OUTPERFORMED (good manager)\n❌ α < 0: Fund UNDERPERFORMED (poor manager)\n⚖️ α = 0: Performed exactly as per market risk\n\n──────────────────────────────\n📌 Beta calculation when not given:\nβ = (σp × r) / σm\nwhere r = correlation, σm = market std deviation\n\n📌 Exam Tip (May 2023): NAV computation with Sharpe + Treynor → first derive Beta using both ratios → then compute new NAV.",
+    exam:true },
+  { id:17, category:"Formula", difficulty:"Advanced",
+    front:"📐 Effective Yield per Annum — Formula",
+    back:"Effective Yield p.a. = (Total Yield / Investment) × (365 / Days held) × 100\n\nTotal Yield = Change in NAV + Dividends Received\n\n──────────────────────────────\nExample (ICAI Q10 — Mr. Sinha):\nInvestment = ₹5,00,000\nNAV change = −₹4,761.88\nDividend = ₹9,500\nTotal Yield = ₹4,738.12\nDays = 121\n\nEY = (4738.12/5,00,000) × (365/121) × 100\n   = 2.859% p.a.\n\n──────────────────────────────\n📌 This formula is REPEATEDLY asked across multiple ICAI questions (Q10, Q11 pattern).",
+    exam:true },
+  { id:18, category:"Formula", difficulty:"Intermediate",
+    front:"📐 Tracking Error Formula",
+    back:"TE = √[Σ(d − d̄)² / (n−1)]\n\nWhere:\n• d = Differential return (Fund return − Benchmark return)\n• d̄ = Average of all differential returns\n• n = Number of observations\n\n──────────────────────────────\nIdeal Value: TE → 0\n\nInterpretation:\n• Low TE: Fund closely replicates benchmark ✅\n• High TE: Fund deviates significantly ❌\n\n📌 Used mainly for Index Funds / Passive Funds\n📌 Higher TE = Higher risk profile even for passive funds",
+    exam:false },
+
+  // ── PRACTICAL ────────────────────────────────────────────────────────
+  { id:19, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 EXAM Q: Mr. X earns 10% on equity. An MF has 6% initial expenses and 2% recurring expenses. What must the MF earn to give Mr. X 10%?",
+    back:"Using formula:\nR₂ = [1/(1 − Initial Exp)] × R₁ + Recurring Exp\n\nR₂ = [1/(1 − 0.06)] × 0.10 + 0.02\n   = [1/0.94] × 0.10 + 0.02\n   = 0.1064 + 0.02\n   = 0.1264 = 12.64%\n\n──────────────────────────────\n✅ Answer: MF must earn 12.64%\n\n📌 Step-by-step logic:\n1. Initial expense reduces investable corpus\n2. Divide desired return by (1 − initial expense)\n3. Add back recurring expenses",
+    exam:true },
+  { id:20, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 EXAM Q: NAV = ₹20. Income distribution = ₹0.0375. Capital gain = ₹0.03. End NAV = ₹20.06. Find monthly return.",
+    back:"r = [(NAVt − NAVt-1) + It + Gt] / NAVt-1\n\nr = [(20.06 − 20) + 0.0375 + 0.03] / 20\n  = [0.06 + 0.0675] / 20\n  = 0.1275 / 20\n  = 0.006375\n  = 0.6375% per month\n  = 7.65% per annum\n\n──────────────────────────────\n✅ Monthly return = 0.6375%\n✅ Annual return = 7.65%\n\n📌 Always annualize by multiplying by 12 unless exam specifies otherwise.",
+    exam:true },
+  { id:21, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 300 units of MF purchased at ₹12.25. Dividend = ₹1.25/unit. Cap gain = ₹1.00/unit. End NAV = ₹13.00. Find return on investment.",
+    back:"Return per unit:\n• Change in price = 13.00 − 12.25 = ₹0.75\n• Dividend = ₹1.25\n• Cap gain = ₹1.00\n• Total = ₹3.00\n\nReturn = 3.00 / 12.25 × 100\n       = 24.49%\n\n──────────────────────────────\n🔄 If REINVESTED at ₹12.50/unit:\nTotal reinvested = ₹2.25 × 300 = ₹675\nNew units = 675 / 12.50 = 54 units\nTotal units = 354\nEnd value = 354 × ₹13 = ₹4,602\nCost = 300 × 12.25 = ₹3,675\nReturn = (4602 − 3675) / 3675 = 25.22%\n\n✅ Reinvestment gives higher return (25.22% > 24.49%)",
+    exam:true },
+  { id:22, category:"Practical", difficulty:"Advanced",
+    front:"🧮 NAV Calculation: A fund holds shares worth ₹4,20,20,000. Accrued expenses = ₹2,50,000. Other liabilities = ₹2,00,000. Total units = 10 lakh. Find NAV per unit.",
+    back:"Net Assets = Market Value − Liabilities\n\nTotal MV of shares = ₹4,20,20,000\nLess: Accrued Expenses = ₹2,50,000\nLess: Other Liabilities  = ₹2,00,000\n────────────────────────\nNet Assets = ₹4,15,70,000\n\nNAV per unit = ₹4,15,70,000 / 10,00,000\n             = ₹41.57\n\n──────────────────────────────\n📌 Always use MARKET VALUE of investments\n📌 When new investor adds money → new units = Amount / Current NAV\n📌 Total units increases; per unit NAV remains same",
+    exam:true },
+  { id:23, category:"Practical", difficulty:"Advanced",
+    front:"🧮 EXAM Q (May 2023 pattern): MF has Sharpe = 2, Treynor = 15, SD = 11.25. Market falls 5%. NAV = ₹70.71 (99% equity, 1% cash). Cost = ₹3/unit p.a. Find NAV after 1 month.",
+    back:"Step 1 — Find Beta using both ratios:\nSharpe: E(R)−Rf = 2 × 11.25 = 22.50\nTreynor: 15 = 22.50 / β → β = 1.50\n\nStep 2 — Equity & Cash split:\nEquity = 99% × 70.71 = ₹70\nCash = 1% × 70.71 = ₹0.71\n\nStep 3 — Equity falls by:\nMarket fell 5% × β 1.50 = 7.5%\nNew Equity = 70 × (1 − 0.075) = ₹64.75\n\nStep 4 — Adjust cash for monthly cost:\nMonthly cost = 3/12 = ₹0.25\nCash after 1 month = 0.71 − 0.25 = ₹0.46\n\n✅ New NAV = 64.75 + 0.46 = ₹65.21",
+    exam:true },
+  { id:24, category:"Practical", difficulty:"Advanced",
+    front:"🧮 Hedge Fund Fee: ANP Fund assets = ₹20 Cr. Fixed fee = 0.10%. Incentive fee = 2% on excess over ₹21 Cr high watermark. Return = 29%. Calculate total fee.",
+    back:"Fixed Fee = 0.10% × ₹20 Cr = ₹2,00,000\n\nNew Fund Value = 1.29 × ₹20 Cr = ₹25.80 Cr\n\nExcess over high watermark:\n= 25.80 − 21.00 = ₹4.80 Cr\n\nIncentive Fee = 2% × ₹4.80 Cr\n              = ₹9,60,000\n\n✅ Total Fee = 2,00,000 + 9,60,000 = ₹11,60,000\n\n──────────────────────────────\nScenario B (4.5% return):\nNew value = ₹20.90 Cr < ₹21 Cr (HWM)\n→ No incentive fee → Total = ₹2,00,000\n\nScenario C (−1.8% return):\n→ Only fixed fee = ₹2,00,000\n\n📌 High Watermark: Incentive only when fund exceeds all-time peak.",
+    exam:true },
+
+  // ── THEORY Q&A ───────────────────────────────────────────────────────
+  { id:25, category:"Theory Q&A", difficulty:"Basic",
+    front:"How do you establish a Mutual Fund in India? Key SEBI requirements?",
+    back:"1. Register with SEBI before collecting public funds\n\n2. Sponsor:\n→ Body corporate in financial services ≥ 5 years\n→ Financially sound\n→ Must contribute ≥ 40% of AMC net worth\n\n3. Trust structure:\n→ Established under Indian Trust Act\n→ Trust deed registered under Indian Registration Act 1908\n\n4. AMC:\n→ Limited liability company\n→ Minimum net worth = ₹100 Crores\n→ 50% independent directors\n→ Can be terminated by majority trustees or 75% unit holders\n\n5. Board of Trustees:\n→ At least 2/3 independent directors\n\n6. Custodian: Must be independent of sponsor & AMC",
+    exam:false },
+  { id:26, category:"Theory Q&A", difficulty:"Basic",
+    front:"What are the key ADVANTAGES of Mutual Funds? (List 6 exam-worthy ones)",
+    back:"1. 🧑‍💼 Professional Management\nSkilled managers + research team\n\n2. 🌐 Diversification\nReduces concentration risk\n\n3. 💧 Liquidity\nOpen-ended: direct redemption; Close-ended: stock exchange listing\n\n4. 🔍 Transparency\nSEBI mandates half-yearly portfolio disclosure; daily NAV via AMFI\n\n5. 💸 Low Cost\nSEBI cap of 2.5% expense ratio for equity MFs\n\n6. 📊 Economies of Scale\nPooled funds → lower transaction costs vs. direct market investment\n\n+ Flexibility (SIP, SWP), Convenience, Highly Regulated by SEBI\n\n📌 Write 6–8 with 1-line explanation each for 4-mark questions.",
+    exam:false },
+  { id:27, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"What are the DRAWBACKS of Mutual Funds? (4 key drawbacks)",
+    back:"1. ❌ No Guarantee of Return\n• Some schemes underperform benchmark\n• Different entry/exit points → different investor returns\n• Short-term loss possible in market crashes (2008, Covid 2020)\n\n2. 📉 Diversification Dilutes Gains\n• Can't match returns of a single high-performing stock\n• Neither exceptionally good nor bad\n\n3. 🔍 Difficult Fund Selection\n• Past performance ≠ future performance\n• Harder than picking stocks\n\n4. 💰 Cost Factor\n• Annual Management Fee (regardless of performance)\n• Exit Load if redeemed before stipulated period",
+    exam:false },
+  { id:28, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"Describe the Role of a Fund Manager in Active vs Passive funds",
+    back:"🎯 Actively Managed Funds:\n→ Use extensive research, judgement & due diligence\n→ Aim to OUTPERFORM market (generate positive Alpha)\n→ Right stock picking = competitive advantage\n\n📊 Passively Managed Funds:\n→ Match benchmark return with minimum Tracking Error\n→ No stock selection; purely replication\n\nOther roles of Fund Manager:\n1. Compliance — SEBI, AMFI guidelines, timely reporting\n2. Continuous monitoring — enter/exit decisions\n3. Wealth Creation — Fundamental + Technical analysis\n4. Control over outsourced work\n\n📌 Performance judged on: return ABOVE inflation + interest rate.",
+    exam:false },
+  { id:29, category:"Theory Q&A", difficulty:"Basic",
+    front:"What is Trail Commission? What is Expense Ratio (TER)?",
+    back:"💸 Trail Commission:\n→ Annual fee paid by MF investor to distributor/advisor\n→ 0.30–0.75% of daily average AUM\n→ Paid MONTHLY (% of daily avg AUM)\n→ Purpose: Incentivize advisor to review + advise holdings periodically\n\n──────────────────────────────\n📊 Expense Ratio (TER / MER):\n→ % of assets spent to RUN the mutual fund annually\n→ Includes: Management fees, advisory fees, audit, custodian, registrar, consultancy fees\n→ Does NOT include brokerage costs\n→ Can be 2–3% → significantly impacts returns\n→ SEBI cap: 2.5% for equity MFs\n\n📌 Lower expense ratio = better for investor (especially in Direct Plans).",
+    exam:false },
+  { id:30, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"What is the role of FIIs in Mutual Funds? (3 key impacts)",
+    back:"FII = Foreign Institutional Investors (large foreign groups with substantial investible funds)\n\nFIIs can buy domestic MF units:\n→ Directly from issuer, OR\n→ Via registered stock broker on recognized exchange\n→ Subject to SEBI limits\n\n3 Key Impacts on Indian Economy:\n\n1. 🏛 Enhanced Corporate Governance\n→ FIIs conduct thorough due diligence → forces companies to improve governance\n\n2. 📈 Improved Market Competition\n→ Their entry increases efficiency and competition\n\n3. 💵 Improved Capital Inflow + Foreign Exchange\n→ Generates employment + strengthens forex reserves\n\n⚠️ Note: FIIs typically fuel a BULLISH market for SHORT periods → can reverse quickly.",
+    exam:false },
+
+  // ── QUICK FIRE ───────────────────────────────────────────────────────
+  { id:31, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ TRUE or FALSE:\n\nEntrance Load is currently charged by all Mutual Funds in India.",
+    back:"❌ FALSE\n\nAs of now, NO Mutual Fund Scheme charges any Entry Load/Entry Charge.\n\nExit Load is still charged if units are redeemed before a stipulated holding period.\n\n📌 This was abolished by SEBI to reduce mis-selling by distributors who were incentivized to churn portfolios.",
+    exam:false },
+  { id:32, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ FILL IN THE BLANK:\n\nIn a Close-Ended fund, at least _____ of unit holders can terminate the AMC.",
+    back:"✅ 75%\n\nAlso note:\n• Majority of trustees can ALSO terminate the AMC\n• 2/3 of trustees must be INDEPENDENT\n• 50% of AMC directors must be INDEPENDENT\n\n📌 Full structure of control:\nTrustees (majority) → terminate AMC\nUnit holders (75%) → terminate AMC\n\nThis ensures investor protection under SEBI Mutual Fund Regulations.",
+    exam:false },
+  { id:33, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ MATCH: Which ratio uses which risk measure?\n\nA. Sharpe Ratio\nB. Treynor Ratio\nC. Sortino Ratio\nD. Jensen's Alpha",
+    back:"A. Sharpe → Standard Deviation (Total Risk)\n\nB. Treynor → Beta (Systematic Risk only)\n\nC. Sortino → Downside Deviation only (not full SD)\n\nD. Jensen's Alpha → Beta via CAPM\n   (Actual Return − CAPM Expected Return)\n\n──────────────────────────────\n📌 Memory trick:\n• SHARP → Standard deviation\n• TREYNOR → TRacks Beta\n• SorTINO → only downside TIN (negative)\n• Jensen = Excess alpha above CAPM",
+    exam:false },
+  { id:34, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ What happens to NAV when a dividend is declared and paid out?",
+    back:"📉 NAV FALLS by the amount of dividend paid out.\n\nExample:\nNAV before dividend = ₹16\nDividend paid = ₹4 per unit\nNAV after dividend = ₹12\n\n──────────────────────────────\nOptions for investors:\n\n1. Dividend Payout: Receive cash; NAV falls\n2. Dividend Reinvestment: Cash reinvested at ex-dividend NAV; get more units; NAV still falls but unit count increases\n3. Growth Option: No dividend; NAV keeps growing until you sell\n\n📌 In dividend reinvestment, total investment value remains same on ex-dividend date — only unit count changes.",
+    exam:false },
+  { id:35, category:"Quick Fire", difficulty:"Advanced",
+    front:"⚡ Which fund type is close-ended by SEBI mandate?\n\nA. ETF\nB. Capital Protection Oriented Fund\nC. Real Estate MF (REMF)\nD. Both B and C",
+    back:"✅ Answer: D — Both B and C\n\n📋 Capital Protection Oriented Fund:\n→ Must be CLOSE-ENDED\n→ Listed on stock exchange\n→ Portfolio structure rated by credit rating agency\n→ Invests majority in high-rated debt + some equity for appreciation\n→ ≠ Capital Guaranteed (no bank guarantee)\n\n🏠 Real Estate MF (REMF):\n→ Close-ended by nature\n→ Listed on stock exchange\n→ Earns rentals + capital appreciation\n→ Also invests in equity/debentures of real estate companies",
+    exam:false },
+  { id:36, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ What does ELSS stand for and what are its key features?",
+    back:"ELSS = Equity Linked Savings Scheme\n\nKey Features:\n✅ Tax saving under Section 80C of Income Tax Act\n✅ Lock-in period: 3 YEARS (shortest among all 80C instruments)\n✅ Invests in equity → potential for higher returns vs traditional tax savers\n✅ Can invest via SIP (benefit of rupee cost averaging)\n\n📌 Comparison with other 80C instruments:\n• PPF: 15 years lock-in\n• ELSS: 3 years lock-in → most liquid tax-saving option\n• NSC: 5 years\n\n📌 ELSS = equity-oriented; hence higher risk but higher potential returns.",
+    exam:false },
+  { id:37, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ What is a Fund of Funds (FoF)?",
+    back:"📦 Fund of Funds = Mutual fund scheme that invests in OTHER mutual fund schemes (not directly in securities)\n\nKey Points:\n• Underlying investment = units of other MF schemes\n• From same fund family OR other fund houses\n• Popular where MF offerings are numerous and choosing is complex\n\nExample: Indian MFs investing in International MF schemes\n\nPros:\n✅ Diversification across fund managers\n✅ Access to international markets easily\n\nCons:\n❌ Double expense ratio (own + underlying fund's expense)\n\n📌 FoF is categorized under Special Funds in Portfolio Classification.",
+    exam:false },
+  { id:38, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ Full form & meaning:\nAMFI | AMC | NFO | SIP | SWP | TER",
+    back:"📋 Quick Reference:\n\nAMFI → Association of Mutual Funds in India\n(Publishes daily NAV, regulates distributors)\n\nAMC → Asset Management Company\n(Manages the MF; runs schemes; max expense 2.5%)\n\nNFO → New Fund Offer\n(Like IPO for MFs; initial subscription period)\n\nSIP → Systematic Investment Plan\n(Regular fixed investment at intervals)\n\nSWP → Systematic Withdrawal Plan\n(Regular fixed withdrawal from investment)\n\nTER → Total Expense Ratio\n(Same as MER — Management Expense Ratio)\n\n📌 NAV published daily through AMFI in newspapers.",
+    exam:false },
+];
+
+const CATEGORIES = ["All","Concept","Formula","Practical","Theory Q&A","Quick Fire"];
+const CAT_COLORS = {
+  Concept:"#3B82F6", Formula:"#8B5CF6", Practical:"#F59E0B",
+  "Theory Q&A":"#10B981", "Quick Fire":"#EF4444"
+};
+const DIFF_COLORS = { Basic:"#22C55E", Intermediate:"#F59E0B", Advanced:"#EF4444" };
+
+function App() {
+  const [page, setPage] = useState("home");    // home | study | stats
+  const [selCat, setSelCat] = useState("All");
+  const [examOnly, setExamOnly] = useState(false);
+  const [deck, setDeck] = useState(cards);
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known, setKnown] = useState(new Set());
+  const [unknown, setUnknown] = useState(new Set());
+  const [shuffled, setShuffled] = useState(false);
+  const touchX = useRef(null);
+  const touchY = useRef(null);
+
+  // Rebuild deck whenever filters change
+  useEffect(() => {
+    let f = cards;
+    if (selCat !== "All") f = f.filter(c => c.category === selCat);
+    if (examOnly) f = f.filter(c => c.exam);
+    if (shuffled) f = [...f].sort(() => Math.random() - 0.5);
+    setDeck(f);
+    setIdx(0);
+    setFlipped(false);
+  }, [selCat, examOnly, shuffled]);
+
+  const cur = deck[idx] || null;
+  const progress = deck.length ? Math.round((idx / deck.length) * 100) : 0;
+  const knownCount = [...known].filter(id => deck.find(c => c.id === id)).length;
+  const unknownCount = [...unknown].filter(id => deck.find(c => c.id === id)).length;
+
+  const go = (dir) => {
+    setFlipped(false);
+    setTimeout(() => {
+      setIdx(i => {
+        if (dir === 1 && i < deck.length - 1) return i + 1;
+        if (dir === -1 && i > 0) return i - 1;
+        return i;
+      });
+    }, 80);
+  };
+
+  const mark = (type) => {
+    if (!cur) return;
+    if (type === "know") {
+      setKnown(s => new Set([...s, cur.id]));
+      setUnknown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    } else {
+      setUnknown(s => new Set([...s, cur.id]));
+      setKnown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    }
+    go(1);
+  };
+
+  const startStudy = (cat, examOnlyMode) => {
+    setSelCat(cat);
+    setExamOnly(examOnlyMode || false);
+    setShuffled(false);
+    setIdx(0);
+    setFlipped(false);
+    setPage("study");
+  };
+
+  const onTouchStart = (e) => {
+    touchX.current = e.touches[0].clientX;
+    touchY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    touchX.current = null;
+    if (dy > 50) return;
+    if (dx < -50) go(1);
+    else if (dx > 50) go(-1);
+  };
+
+  // ── HOME ──────────────────────────────────────────────────────────────
+  if (page === "home") return (
+    <div style={S.page}>
+      <div style={S.homeWrap}>
+        {/* Header */}
+        <div style={S.header}>
+          <div style={S.badge}>CA FINALS · GROUP I · AFM</div>
+          <div style={S.title}>Mutual Funds</div>
+          <div style={S.subtitle}>Chapter 8 · Advanced Financial Management</div>
+          <div style={S.statsRow}>
+            <Pill num={cards.length} lbl="Cards"/>
+            <Pill num={5} lbl="Categories"/>
+            <Pill num={cards.filter(c=>c.exam).length} lbl="Exam Qs"/>
+          </div>
+        </div>
+
+        {/* Category grid */}
+        <div style={S.grid}>
+          {CATEGORIES.filter(c=>c!=="All").map(c => (
+            <button key={c} style={{...S.catCard, borderColor: CAT_COLORS[c]}}
+              onClick={() => startStudy(c, false)}>
+              <div style={{...S.catDot, background: CAT_COLORS[c]}}/>
+              <div style={S.catName}>{c}</div>
+              <div style={S.catCnt}>{cards.filter(x=>x.category===c).length} cards</div>
+            </button>
+          ))}
+        </div>
+
+        <button style={S.mainBtn} onClick={() => startStudy("All", false)}>
+          Study All 38 Cards →
+        </button>
+        <button style={{...S.mainBtn, ...S.outlineBtn}} onClick={() => startStudy("All", true)}>
+          ⚡ Exam Questions Only
+        </button>
+        <button style={{...S.mainBtn, ...S.statsBtn}} onClick={() => setPage("stats")}>
+          📊 View Progress
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── STATS ─────────────────────────────────────────────────────────────
+  if (page === "stats") {
+    const pct = Math.round(knownCount / (deck.length || 1) * 100);
+    return (
+      <div style={S.page}>
+        <div style={S.homeWrap}>
+          <button style={S.backBtn} onClick={() => setPage("home")}>← Back</button>
+          <div style={{...S.title, marginBottom:24}}>Your Progress</div>
+          <div style={S.statsDetail}>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#22C55E"}}>{knownCount}</div>
+              <div style={S.bigLbl}>✅ Know It</div>
+            </div>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#EF4444"}}>{unknownCount}</div>
+              <div style={S.bigLbl}>🔁 Review</div>
+            </div>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#64748b"}}>{deck.length - knownCount - unknownCount}</div>
+              <div style={S.bigLbl}>⏳ Unseen</div>
+            </div>
+          </div>
+          <div style={S.pBarWrap}>
+            <div style={{...S.pBarFill, width:`${pct}%`, background:"linear-gradient(90deg,#22C55E,#86efac)"}}/>
+          </div>
+          <div style={{color:"#94a3b8", textAlign:"center", fontSize:13, marginTop:8, fontFamily:"Arial,sans-serif"}}>
+            {pct}% mastered
+          </div>
+          {unknownCount > 0 && (
+            <button style={{...S.mainBtn, marginTop:28}}
+              onClick={() => {
+                const ids = new Set([...unknown].filter(id => deck.find(c=>c.id===id)));
+                setDeck(prev => prev.filter(c => ids.has(c.id)));
+                setIdx(0); setFlipped(false); setPage("study");
+              }}>
+              🔁 Review Weak Cards ({unknownCount})
+            </button>
+          )}
+          <button style={{...S.mainBtn, ...S.outlineBtn, marginTop:10}}
+            onClick={() => { setKnown(new Set()); setUnknown(new Set()); }}>
+            Reset Progress
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STUDY ─────────────────────────────────────────────────────────────
+  return (
+    <div style={S.page} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Top Bar */}
+      <div style={S.topBar}>
+        <button style={S.iconBtn} onClick={() => { setExamOnly(false); setPage("home"); }}>🏠</button>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <div style={{color:"#e2e8f0",fontSize:14,fontWeight:600,fontFamily:"Arial,sans-serif"}}>
+            {idx+1} / {deck.length}
+          </div>
+          {cur && <div style={{...S.diffBadge, background: DIFF_COLORS[cur.difficulty]||"#666"}}>{cur.difficulty}</div>}
+        </div>
+        <button style={S.iconBtn} onClick={() => setPage("stats")}>📊</button>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{width:"100%", paddingBottom:8}}>
+        <div className="filter-scroll">
+          {CATEGORIES.map(c => (
+            <button key={c} style={{
+              ...S.pill,
+              background: selCat===c ? (CAT_COLORS[c]||"#3B82F6") : "#1e293b",
+              color: selCat===c ? "#fff" : "#94a3b8",
+            }} onClick={() => setSelCat(c)}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div style={S.pTrack}>
+        <div style={{...S.pFill, width:`${progress}%`}}/>
+      </div>
+
+      {/* Card */}
+      {cur ? (
+        <div className="card-area no-select" onClick={() => setFlipped(f=>!f)}>
+          <div className={`card${flipped?" flipped":""}`}>
+            <div className="face face-front">
+              <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
+              {cur.exam && <div style={S.examTag}>⚡ EXAM Q</div>}
+              <div style={S.question}>{cur.front}</div>
+              <div style={S.tapHint}>Tap to reveal answer</div>
+            </div>
+            <div className="face face-back">
+              <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
+              <div style={S.answer}>{cur.back}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={S.emptyState}>
+          <div style={{fontSize:48}}>🎉</div>
+          <div style={{color:"#fff",fontSize:18,fontWeight:700,marginTop:12}}>All Done!</div>
+          <div style={{color:"#94a3b8",fontSize:14,marginTop:6,fontFamily:"Arial,sans-serif"}}>You've reviewed all cards in this set</div>
+          <button style={{...S.mainBtn, marginTop:24}} onClick={() => { setIdx(0); setFlipped(false); }}>Restart</button>
+        </div>
+      )}
+
+      {/* Mark buttons — only when flipped */}
+      {flipped && cur && (
+        <div style={S.actionRow}>
+          <button style={S.noBtn} onClick={(e)=>{ e.stopPropagation(); mark("dontknow"); }}>
+            <span style={{fontSize:20}}>🔁</span>
+            <span style={{color:"#e2e8f0",fontSize:12,fontFamily:"Arial,sans-serif",fontWeight:600}}>Review Again</span>
+          </button>
+          <button style={S.yesBtn} onClick={(e)=>{ e.stopPropagation(); mark("know"); }}>
+            <span style={{fontSize:20}}>✅</span>
+            <span style={{color:"#e2e8f0",fontSize:12,fontFamily:"Arial,sans-serif",fontWeight:600}}>Got It!</span>
+          </button>
+        </div>
+      )}
+
+      {/* Nav row */}
+      <div style={S.navRow}>
+        <button style={{...S.navBtn, opacity: idx===0 ? 0.3:1}} onClick={() => go(-1)} disabled={idx===0}>‹ Prev</button>
+        <button style={S.shuffleBtn} onClick={() => setShuffled(s=>!s)}>
+          {shuffled ? "🔀 Shuffled" : "🔀 Shuffle"}
+        </button>
+        <button style={{...S.navBtn, opacity: idx>=deck.length-1 ? 0.3:1}} onClick={() => go(1)} disabled={idx>=deck.length-1}>Next ›</button>
+      </div>
+
+      {/* Status label */}
+      <div style={{minHeight:28, display:"flex", justifyContent:"center", alignItems:"center", marginBottom:8, paddingBottom:"env(safe-area-inset-bottom,12px)"}}>
+        {cur && known.has(cur.id) && <span style={{color:"#22C55E",fontSize:12,fontFamily:"Arial,sans-serif"}}>✅ Marked as known</span>}
+        {cur && unknown.has(cur.id) && <span style={{color:"#EF4444",fontSize:12,fontFamily:"Arial,sans-serif"}}>🔁 Needs review</span>}
+        {cur && !known.has(cur.id) && !unknown.has(cur.id) && <span style={{color:"#475569",fontSize:12,fontFamily:"Arial,sans-serif"}}>Swipe left/right or use buttons</span>}
+      </div>
+    </div>
+  );
+}
+
+function Pill({ num, lbl }) {
+  return (
+    <div style={{ background:"#1e293b", borderRadius:12, padding:"8px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+      <span style={{color:"#a5b4fc",fontSize:20,fontWeight:700}}>{num}</span>
+      <span style={{color:"#64748b",fontSize:11,fontFamily:"Arial,sans-serif"}}>{lbl}</span>
+    </div>
+  );
+}
+
+const S = {
+  page: {
+    minHeight: "100dvh",
+    minHeight: "-webkit-fill-available",
+    background: "#0A0F1E",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    maxWidth: 430,
+    margin: "0 auto",
+    overflowX: "hidden",
+    paddingTop: "env(safe-area-inset-top, 0px)",
+  },
+  homeWrap: {
+    width: "100%",
+    padding: "20px 20px 40px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: "calc(40px + env(safe-area-inset-bottom, 0px))",
+  },
+  header: {
+    width: "100%",
+    background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
+    borderRadius: 20,
+    padding: "24px 20px 20px",
+    textAlign: "center",
+    border: "1px solid #312e81",
+    marginBottom: 20,
+  },
+  badge: {
+    background: "#312e81",
+    color: "#a5b4fc",
+    fontSize: 10,
+    fontFamily: "Arial, sans-serif",
+    letterSpacing: 2,
+    padding: "4px 12px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 10,
+  },
+  title: { color:"#fff", fontSize:26, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
+  subtitle: { color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", marginBottom:18 },
+  statsRow: { display:"flex", gap:10, justifyContent:"center" },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+    width: "100%",
+    marginBottom: 14,
+  },
+  catCard: {
+    background: "#0f172a",
+    border: "1.5px solid",
+    borderRadius: 14,
+    padding: "14px 12px",
+    textAlign: "left",
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    WebkitAppearance: "none",
+  },
+  catDot: { width:8, height:8, borderRadius:"50%", marginBottom:4 },
+  catName: { color:"#e2e8f0", fontSize:13, fontWeight:600, fontFamily:"Arial,sans-serif" },
+  catCnt: { color:"#64748b", fontSize:12, fontFamily:"Arial,sans-serif" },
+  mainBtn: {
+    width: "100%",
+    background: "linear-gradient(135deg, #6366f1, #8B5CF6)",
+    color: "#fff",
+    border: "none",
+    borderRadius: 14,
+    padding: "15px",
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: "Arial, sans-serif",
+    cursor: "pointer",
+    letterSpacing: 0.5,
+    marginTop: 8,
+    WebkitAppearance: "none",
+  },
+  outlineBtn: {
+    background: "transparent",
+    border: "1.5px solid #8B5CF6",
+    color: "#a78bfa",
+  },
+  statsBtn: {
+    background: "transparent",
+    border: "1.5px solid #475569",
+    color: "#94a3b8",
+  },
+  backBtn: {
+    color: "#94a3b8",
+    background: "none",
+    border: "none",
+    fontSize: 15,
+    cursor: "pointer",
+    alignSelf: "flex-start",
+    fontFamily: "Arial,sans-serif",
+    padding: "8px 0",
+    marginBottom: 8,
+  },
+  statsDetail: { display:"flex", gap:12, marginTop:8, marginBottom:14, width:"100%" },
+  statBlock: { flex:1, background:"#0f172a", borderRadius:16, padding:"16px 10px", textAlign:"center" },
+  bigNum: { fontSize:32, fontWeight:700 },
+  bigLbl: { color:"#94a3b8", fontSize:12, fontFamily:"Arial,sans-serif", marginTop:4 },
+  pBarWrap: { width:"100%", height:8, background:"#1e293b", borderRadius:4, overflow:"hidden" },
+  topBar: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 20px 8px",
+    background: "#0A0F1E",
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+    flexShrink: 0,
+  },
+  iconBtn: {
+    background: "#1e293b",
+    border: "none",
+    borderRadius: 10,
+    width: 38,
+    height: 38,
+    fontSize: 18,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    WebkitAppearance: "none",
+  },
+  diffBadge: {
+    fontSize: 10,
+    color: "#000",
+    padding: "2px 8px",
+    borderRadius: 10,
+    fontWeight: 700,
+    fontFamily: "Arial,sans-serif",
+  },
+  pill: {
+    border: "none",
+    borderRadius: 20,
+    padding: "6px 14px",
+    fontSize: 12,
+    fontFamily: "Arial, sans-serif",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    fontWeight: 600,
+    flexShrink: 0,
+    WebkitAppearance: "none",
+  },
+  pTrack: {
+    width: "calc(100% - 40px)",
+    height: 3,
+    background: "#1e293b",
+    borderRadius: 2,
+    overflow: "hidden",
+    margin: "0 20px 14px",
+    flexShrink: 0,
+  },
+  pFill: {
+    height: "100%",
+    background: "linear-gradient(90deg, #6366f1, #8B5CF6)",
+    borderRadius: 2,
+    transition: "width 0.3s",
+  },
+  pBarFill: {
+    height: "100%",
+    borderRadius: 4,
+    transition: "width 0.4s",
+  },
+  catTag: {
+    fontSize: 11,
+    color: "#fff",
+    padding: "3px 10px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 12,
+    alignSelf: "flex-start",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 700,
+    letterSpacing: 0.5,
+    flexShrink: 0,
+  },
+  examTag: {
+    fontSize: 11,
+    color: "#fbbf24",
+    background: "#1c1200",
+    border: "1px solid #d97706",
+    padding: "3px 10px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  question: {
+    color: "#e2e8f0",
+    fontSize: 16,
+    lineHeight: 1.6,
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    whiteSpace: "pre-line",
+    fontFamily: "Georgia, serif",
+  },
+  tapHint: {
+    color: "#475569",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 16,
+    fontFamily: "Arial, sans-serif",
+    flexShrink: 0,
+  },
+  answer: {
+    color: "#d1fae5",
+    fontSize: 13,
+    lineHeight: 1.8,
+    whiteSpace: "pre-line",
+    fontFamily: "'Courier New', monospace",
+    flex: 1,
+  },
+  actionRow: {
+    display: "flex",
+    gap: 12,
+    width: "calc(100% - 40px)",
+    margin: "10px 0 4px",
+    flexShrink: 0,
+  },
+  noBtn: {
+    flex: 1,
+    background: "#1c0a0a",
+    border: "1.5px solid #EF4444",
+    borderRadius: 14,
+    padding: "12px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+    cursor: "pointer",
+    WebkitAppearance: "none",
+  },
+  yesBtn: {
+    flex: 1,
+    background: "#0a1c0a",
+    border: "1.5px solid #22C55E",
+    borderRadius: 14,
+    padding: "12px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+    cursor: "pointer",
+    WebkitAppearance: "none",
+  },
+  navRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "calc(100% - 40px)",
+    margin: "8px 0 4px",
+    gap: 8,
+    flexShrink: 0,
+  },
+  navBtn: {
+    background: "#1e293b",
+    color: "#94a3b8",
+    border: "none",
+    borderRadius: 10,
+    padding: "10px 16px",
+    fontSize: 14,
+    cursor: "pointer",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 600,
+    WebkitAppearance: "none",
+  },
+  shuffleBtn: {
+    background: "#1e293b",
+    color: "#a5b4fc",
+    border: "1px solid #312e81",
+    borderRadius: 10,
+    padding: "10px 14px",
+    fontSize: 12,
+    cursor: "pointer",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 600,
+    flex: 1,
+    WebkitAppearance: "none",
+  },
+  emptyState: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 20px",
+    width: "100%",
+  },
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
