@@ -111,9 +111,11 @@ const cards = [
     front:"What are the 3 classifications of Mutual Funds?",
     back:"1️⃣ Functional Classification\n→ Open-Ended, Close-Ended, Interval Funds\n\n2️⃣ Portfolio Classification\n→ Equity Funds, Debt Funds, Special Funds\n\n3️⃣ Ownership Classification\n→ Public Sector, Private Sector, Foreign MFs\n\n📌 Exam Tip: All 3 types are frequently asked as short theory.",
     exam:false },
+
+  // FIX #3 — Interval fund description: removed "no defined maturity" claim
   { id:3, category:"Concept", difficulty:"Basic",
     front:"Differentiate: Open-Ended vs Close-Ended vs Interval Funds",
-    back:"🔓 Open-Ended: Enter/exit anytime. Unlimited capital. Redemption indefinite. Transact at NAV.\n\n🔒 Close-Ended: Entry only via NFO or stock exchange. Limited life. Exit via stock exchange or maturity. Traded like shares.\n\n⏱ Interval: Hybrid of both. Open for purchase/redemption at pre-specified intervals. NOT required to be listed. Maturity period NOT defined.\n\n📌 Interval ≠ Close-Ended because no mandatory listing + no defined maturity.",
+    back:"🔓 Open-Ended: Enter/exit anytime. Unlimited capital. Redemption indefinite. Transact at NAV.\n\n🔒 Close-Ended: Entry only via NFO or stock exchange. Limited life. Exit via stock exchange or maturity. Traded like shares.\n\n⏱ Interval: Hybrid of both. Open for purchase/redemption only during specified intervals. Behaves like close-ended between intervals. NOT required to be listed.\n\n📌 Key distinction from Close-Ended: no mandatory listing requirement.",
     exam:false },
   { id:4, category:"Concept", difficulty:"Intermediate",
     front:"Name the 3 types of Equity Funds and who they suit",
@@ -135,9 +137,11 @@ const cards = [
     front:"What is Side Pocketing in Mutual Funds?",
     back:"🗂 Side Pocketing = Separation of risky/stressed assets from liquid assets in a fund.\n\nPurpose:\n✅ Protect liquid asset holders from distress selling\n✅ Lock stressed assets until recovery\n✅ NAV reflects only liquid asset value after side pocketing\n\nHow it works:\n→ When a security's rating falls, it's moved to 'side pocket'\n→ Remaining portfolio carries on normally\n\nReal Example: IL&FS crisis — funds wrote off IL&FS exposure.\n\n⚠️ Con: Can also be misused to deprive investors of genuine returns.\n\n📌 Common internationally; gaining prominence in India post-IL&FS.",
     exam:false },
+
+  // FIX #4 — Tracking Error: "Higher TE = Higher risk profile" replaced with "poorer index tracking"
   { id:9, category:"Concept", difficulty:"Intermediate",
     front:"What is Tracking Error? What causes it?",
-    back:"📐 Tracking Error = Deviation of a fund's return from its benchmark index return\n\nFormula:\nTE = √[Σ(d - d̄)² / (n-1)]\nwhere d = differential return, d̄ = average differential return\n\nGoal: TE → 0 (perfect replication)\n\nCauses of Tracking Error:\n• Transaction costs\n• AMC fees\n• Fund expenses\n• Cash holdings\n• Sampling bias\n\n📌 Higher TE = Higher risk profile.\n📌 Mainly relevant for Passively Managed / Index Funds.",
+    back:"📐 Tracking Error = Deviation of a fund's return from its benchmark index return\n\nFormula:\nTE = √[Σ(d - d̄)² / (n-1)]\nwhere d = differential return, d̄ = average differential return\n\nGoal: TE → 0 (perfect replication)\n\nCauses of Tracking Error:\n• Transaction costs\n• AMC fees\n• Fund expenses\n• Cash holdings\n• Sampling bias\n\n📌 Higher TE = Poorer index tracking (greater deviation from benchmark).\n📌 Mainly relevant for Passively Managed / Index Funds.",
     exam:false },
   { id:10, category:"Concept", difficulty:"Advanced",
     front:"What are Direct Plans in Mutual Funds? Why do they outperform Regular Plans?",
@@ -157,9 +161,11 @@ const cards = [
     front:"📐 Required MF Earnings Formula (when expenses given)",
     back:"R₂ = [1 / (1 − Initial Expenses%)] × R₁ + Recurring Expenses%\n\nWhere:\n• R₁ = Investor's desired return\n• R₂ = MF needs to earn this\n\n──────────────────────────────\nExample (ICAI Practical Q1):\nR₁ = 16%, Initial exp = 5.5%, Recurring = 1.5%\n\nR₂ = [1/(1−0.055)] × 16% + 1.5%\n   = [1/0.945] × 16% + 1.5%\n   = 16.93% + 1.5%\n   = 18.43%\n\n──────────────────────────────\n📌 Logic: Initial expense reduces the investable amount, so fund must earn more to compensate.",
     exam:true },
+
+  // FIX #1 & #2 — Corrected Front-End Load formula (divide by POP, not NAV) and Exit Load formula
   { id:14, category:"Formula", difficulty:"Basic",
     front:"📐 Front-End Load (Entry Load) & Back-End Load (Exit Load) Formulas",
-    back:"🟢 Entry Load (Front-End):\nPOP = NAV / (1 − Front-end Load)\nor\nFront-end Load% = (POP − NAV) / NAV\n\n🔴 Exit Load (Back-End):\nRedemption Price = NAV / (1 + Back-end Load)\nor\nBack-end Load% = (NAV − Redemption Price) / NAV\n\n──────────────────────────────\nExample (ICAI Q2):\nNAV = ₹10, POP = ₹10.204\nFront-end = (10.204 − 10) / 10 = 2.04%\n\nRedemption = ₹9.80\nBack-end = (10 − 9.80) / 10 = 2.00%\n\n📌 Currently NO entry load charged in India.",
+    back:"🟢 Entry Load (Front-End):\nPOP = NAV / (1 − Front-end Load)\nor\nFront-end Load% = (POP − NAV) / POP  ← divide by POP\n\n🔴 Exit Load (Back-End):\nRedemption Price = NAV × (1 − Back-end Load%)\nor\nBack-end Load% = (NAV − Redemption Price) / NAV\n\n──────────────────────────────\nExample:\nNAV = ₹10, POP = ₹10.204\nFront-end = (10.204 − 10) / 10.204 = 2.00%\n\nExit load = 2%\nRedemption = 10 × (1 − 0.02) = ₹9.80\n\n📌 Currently NO entry load charged in India.\n📌 Front-end load denominator is POP (not NAV).",
     exam:true },
   { id:15, category:"Formula", difficulty:"Advanced",
     front:"📐 Sharpe, Treynor & Sortino Ratios — Formulas & Differences",
@@ -171,11 +177,13 @@ const cards = [
     exam:true },
   { id:17, category:"Formula", difficulty:"Advanced",
     front:"📐 Effective Yield per Annum — Formula",
-    back:"Effective Yield p.a. = (Total Yield / Investment) × (365 / Days held) × 100\n\nTotal Yield = Change in NAV + Dividends Received\n\n──────────────────────────────\nExample (ICAI Q10 — Mr. Sinha):\nInvestment = ₹5,00,000\nNAV change = −₹4,761.88\nDividend = ₹9,500\nTotal Yield = ₹4,738.12\nDays = 121\n\nEY = (4738.12/5,00,000) × (365/121) × 100\n   = 2.859% p.a.\n\n──────────────────────────────\n📌 This formula is REPEATEDLY asked across multiple ICAI questions (Q10, Q11 pattern).",
+    back:"Effective Yield p.a. = (Total Gain / Investment) × (365 / Days held) × 100\n\nTotal Gain = Change in NAV + Dividends Received\n\n──────────────────────────────\nExample (ICAI Q10 — Mr. Sinha):\nInvestment = ₹5,00,000\nNAV change = −₹4,761.88\nDividend = ₹9,500\nTotal Gain = ₹4,738.12\nDays = 121\n\nEY = (4738.12/5,00,000) × (365/121) × 100\n   = 2.859% p.a.\n\n──────────────────────────────\n📌 This formula is REPEATEDLY asked across multiple ICAI questions (Q10, Q11 pattern).",
     exam:true },
+
+  // FIX #4 — Tracking Error formula card updated
   { id:18, category:"Formula", difficulty:"Intermediate",
     front:"📐 Tracking Error Formula",
-    back:"TE = √[Σ(d − d̄)² / (n−1)]\n\nWhere:\n• d = Differential return (Fund return − Benchmark return)\n• d̄ = Average of all differential returns\n• n = Number of observations\n\n──────────────────────────────\nIdeal Value: TE → 0\n\nInterpretation:\n• Low TE: Fund closely replicates benchmark ✅\n• High TE: Fund deviates significantly ❌\n\n📌 Used mainly for Index Funds / Passive Funds\n📌 Higher TE = Higher risk profile even for passive funds",
+    back:"TE = √[Σ(d − d̄)² / (n−1)]\n\nWhere:\n• d = Differential return (Fund return − Benchmark return)\n• d̄ = Average of all differential returns\n• n = Number of observations\n\n──────────────────────────────\nIdeal Value: TE → 0\n\nInterpretation:\n• Low TE: Fund closely replicates benchmark ✅\n• High TE: Fund deviates significantly from benchmark ❌\n\n📌 Higher TE = Poorer index tracking (not necessarily higher risk).\n📌 Used mainly for Index Funds / Passive Funds.",
     exam:false },
 
   // ── PRACTICAL ────────────────────────────────────────────────────────
@@ -209,9 +217,11 @@ const cards = [
     front:"How do you establish a Mutual Fund in India? Key SEBI requirements?",
     back:"1. Register with SEBI before collecting public funds\n\n2. Sponsor:\n→ Body corporate in financial services ≥ 5 years\n→ Financially sound\n→ Must contribute ≥ 40% of AMC net worth\n\n3. Trust structure:\n→ Established under Indian Trust Act\n→ Trust deed registered under Indian Registration Act 1908\n\n4. AMC:\n→ Limited liability company\n→ Minimum net worth = ₹100 Crores\n→ 50% independent directors\n→ Can be terminated by majority trustees or 75% unit holders\n\n5. Board of Trustees:\n→ At least 2/3 independent directors\n\n6. Custodian: Must be independent of sponsor & AMC",
     exam:false },
+
+  // FIX #5 — Expense ratio cap updated to reflect AUM-slab structure
   { id:26, category:"Theory Q&A", difficulty:"Basic",
     front:"What are the key ADVANTAGES of Mutual Funds? (List 6 exam-worthy ones)",
-    back:"1. 🧑‍💼 Professional Management\nSkilled managers + research team\n\n2. 🌐 Diversification\nReduces concentration risk\n\n3. 💧 Liquidity\nOpen-ended: direct redemption; Close-ended: stock exchange listing\n\n4. 🔍 Transparency\nSEBI mandates half-yearly portfolio disclosure; daily NAV via AMFI\n\n5. 💸 Low Cost\nSEBI cap of 2.5% expense ratio for equity MFs\n\n6. 📊 Economies of Scale\nPooled funds → lower transaction costs vs. direct market investment\n\n+ Flexibility (SIP, SWP), Convenience, Highly Regulated by SEBI\n\n📌 Write 6–8 with 1-line explanation each for 4-mark questions.",
+    back:"1. 🧑‍💼 Professional Management\nSkilled managers + research team\n\n2. 🌐 Diversification\nReduces concentration risk\n\n3. 💧 Liquidity\nOpen-ended: direct redemption; Close-ended: stock exchange listing\n\n4. 🔍 Transparency\nSEBI mandates half-yearly portfolio disclosure; daily NAV via AMFI\n\n5. 💸 Low Cost\nSEBI places upper caps on TER based on AUM slabs (around 2.25–2.5% for equity MFs; declines as AUM grows)\n\n6. 📊 Economies of Scale\nPooled funds → lower transaction costs vs. direct market investment\n\n+ Flexibility (SIP, SWP), Convenience, Highly Regulated by SEBI\n\n📌 Write 6–8 with 1-line explanation each for 4-mark questions.",
     exam:false },
   { id:27, category:"Theory Q&A", difficulty:"Intermediate",
     front:"What are the DRAWBACKS of Mutual Funds? (4 key drawbacks)",
@@ -221,13 +231,17 @@ const cards = [
     front:"Describe the Role of a Fund Manager in Active vs Passive funds",
     back:"🎯 Actively Managed Funds:\n→ Use extensive research, judgement & due diligence\n→ Aim to OUTPERFORM market (generate positive Alpha)\n→ Right stock picking = competitive advantage\n\n📊 Passively Managed Funds:\n→ Match benchmark return with minimum Tracking Error\n→ No stock selection; purely replication\n\nOther roles of Fund Manager:\n1. Compliance — SEBI, AMFI guidelines, timely reporting\n2. Continuous monitoring — enter/exit decisions\n3. Wealth Creation — Fundamental + Technical analysis\n4. Control over outsourced work\n\n📌 Performance judged on: return ABOVE inflation + interest rate.",
     exam:false },
+
+  // FIX #6 — Trail commission: removed spurious 0.30–0.75% range
   { id:29, category:"Theory Q&A", difficulty:"Basic",
     front:"What is Trail Commission? What is Expense Ratio (TER)?",
-    back:"💸 Trail Commission:\n→ Annual fee paid by MF investor to distributor/advisor\n→ 0.30–0.75% of daily average AUM\n→ Paid MONTHLY (% of daily avg AUM)\n→ Purpose: Incentivize advisor to review + advise holdings periodically\n\n──────────────────────────────\n📊 Expense Ratio (TER / MER):\n→ % of assets spent to RUN the mutual fund annually\n→ Includes: Management fees, advisory fees, audit, custodian, registrar, consultancy fees\n→ Does NOT include brokerage costs\n→ Can be 2–3% → significantly impacts returns\n→ SEBI cap: 2.5% for equity MFs\n\n📌 Lower expense ratio = better for investor (especially in Direct Plans).",
+    back:"💸 Trail Commission:\n→ Annual fee paid by MF investor to distributor/advisor\n→ A percentage of daily average AUM paid periodically to distributors\n→ Paid MONTHLY (% of daily avg AUM)\n→ Purpose: Incentivize advisor to review + advise holdings periodically\n\n──────────────────────────────\n📊 Expense Ratio (TER / MER):\n→ % of assets spent to RUN the mutual fund annually\n→ Includes: Management fees, advisory fees, audit, custodian, registrar, consultancy fees\n→ Does NOT include brokerage costs\n→ SEBI places upper caps on TER based on AUM slabs (around 2.25–2.5% for equity MFs)\n→ Can significantly impact long-term returns\n\n📌 Lower expense ratio = better for investor (especially in Direct Plans).",
     exam:false },
+
+  // FIX #7 — FIIs → FPIs correction
   { id:30, category:"Theory Q&A", difficulty:"Intermediate",
-    front:"What is the role of FIIs in Mutual Funds? (3 key impacts)",
-    back:"FII = Foreign Institutional Investors (large foreign groups with substantial investible funds)\n\nFIIs can buy domestic MF units:\n→ Directly from issuer, OR\n→ Via registered stock broker on recognized exchange\n→ Subject to SEBI limits\n\n3 Key Impacts on Indian Economy:\n\n1. 🏛 Enhanced Corporate Governance\n→ FIIs conduct thorough due diligence → forces companies to improve governance\n\n2. 📈 Improved Market Competition\n→ Their entry increases efficiency and competition\n\n3. 💵 Improved Capital Inflow + Foreign Exchange\n→ Generates employment + strengthens forex reserves\n\n⚠️ Note: FIIs typically fuel a BULLISH market for SHORT periods → can reverse quickly.",
+    front:"What is the role of Foreign Investors in Mutual Funds? (3 key impacts)",
+    back:"Foreign Portfolio Investors (FPIs) and NRIs can invest in Indian mutual funds:\n→ Directly from issuer, OR\n→ Via registered stock broker on recognized exchange\n→ Subject to SEBI limits\n\n📌 Note: FPIs mainly invest directly in listed securities; FPI investment in MF units is a subset.\n\n3 Key Impacts on Indian Economy:\n\n1. 🏛 Enhanced Corporate Governance\n→ Foreign investors conduct thorough due diligence → forces companies to improve governance\n\n2. 📈 Improved Market Competition\n→ Their entry increases efficiency and competition\n\n3. 💵 Improved Capital Inflow + Foreign Exchange\n→ Generates employment + strengthens forex reserves\n\n⚠️ Note: Foreign flows can fuel a BULLISH market for SHORT periods → can reverse quickly.",
     exam:false },
 
   // ── QUICK FIRE ───────────────────────────────────────────────────────
@@ -243,9 +257,11 @@ const cards = [
     front:"⚡ MATCH: Which ratio uses which risk measure?\n\nA. Sharpe Ratio\nB. Treynor Ratio\nC. Sortino Ratio\nD. Jensen's Alpha",
     back:"A. Sharpe → Standard Deviation (Total Risk)\n\nB. Treynor → Beta (Systematic Risk only)\n\nC. Sortino → Downside Deviation only (not full SD)\n\nD. Jensen's Alpha → Beta via CAPM\n   (Actual Return − CAPM Expected Return)\n\n──────────────────────────────\n📌 Memory trick:\n• SHARP → Standard deviation\n• TREYNOR → TRacks Beta\n• SorTINO → only downside TIN (negative)\n• Jensen = Excess alpha above CAPM",
     exam:false },
+
+  // Minor improvement: added "NAV drops ex-dividend" note
   { id:34, category:"Quick Fire", difficulty:"Intermediate",
     front:"⚡ What happens to NAV when a dividend is declared and paid out?",
-    back:"📉 NAV FALLS by the amount of dividend paid out.\n\nExample:\nNAV before dividend = ₹16\nDividend paid = ₹4 per unit\nNAV after dividend = ₹12\n\n──────────────────────────────\nOptions for investors:\n\n1. Dividend Payout: Receive cash; NAV falls\n2. Dividend Reinvestment: Cash reinvested at ex-dividend NAV; get more units; NAV still falls but unit count increases\n3. Growth Option: No dividend; NAV keeps growing until you sell\n\n📌 In dividend reinvestment, total investment value remains same on ex-dividend date — only unit count changes.",
+    back:"📉 NAV FALLS by the amount of dividend paid out (on ex-dividend date).\n\nExample:\nNAV before dividend = ₹16\nDividend paid = ₹4 per unit\nNAV after dividend = ₹12 (ex-dividend NAV)\n\n──────────────────────────────\nOptions for investors:\n\n1. Dividend Payout: Receive cash; NAV falls\n2. Dividend Reinvestment: Cash reinvested at ex-dividend NAV; get more units; NAV still falls but unit count increases\n3. Growth Option: No dividend; NAV keeps growing until you sell\n\n📌 In dividend reinvestment, total investment value remains same on ex-dividend date — only unit count changes.",
     exam:false },
   { id:35, category:"Quick Fire", difficulty:"Advanced",
     front:"⚡ Which fund type is close-ended by SEBI mandate?\n\nA. ETF\nB. Capital Protection Oriented Fund\nC. Real Estate MF (REMF)\nD. Both B and C",
@@ -261,7 +277,7 @@ const cards = [
     exam:false },
   { id:38, category:"Quick Fire", difficulty:"Basic",
     front:"⚡ Full form & meaning:\nAMFI | AMC | NFO | SIP | SWP | TER",
-    back:"📋 Quick Reference:\n\nAMFI → Association of Mutual Funds in India\n(Publishes daily NAV, regulates distributors)\n\nAMC → Asset Management Company\n(Manages the MF; runs schemes; max expense 2.5%)\n\nNFO → New Fund Offer\n(Like IPO for MFs; initial subscription period)\n\nSIP → Systematic Investment Plan\n(Regular fixed investment at intervals)\n\nSWP → Systematic Withdrawal Plan\n(Regular fixed withdrawal from investment)\n\nTER → Total Expense Ratio\n(Same as MER — Management Expense Ratio)\n\n📌 NAV published daily through AMFI in newspapers.",
+    back:"📋 Quick Reference:\n\nAMFI → Association of Mutual Funds in India\n(Publishes daily NAV, regulates distributors)\n\nAMC → Asset Management Company\n(Manages the MF; runs schemes; TER capped per SEBI AUM slabs)\n\nNFO → New Fund Offer\n(Like IPO for MFs; initial subscription period)\n\nSIP → Systematic Investment Plan\n(Regular fixed investment at intervals)\n\nSWP → Systematic Withdrawal Plan\n(Regular fixed withdrawal from investment)\n\nTER → Total Expense Ratio\n(Same as MER — Management Expense Ratio)\n\n📌 NAV published daily through AMFI in newspapers.",
     exam:false },
 ];
 
@@ -842,3 +858,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
+
