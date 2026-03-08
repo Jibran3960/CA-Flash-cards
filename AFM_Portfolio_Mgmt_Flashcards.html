@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AFM · Portfolio Management Flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    body {
+      background: #0A0F1E;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #root { height: 100%; }
+
+    /* Scrollbar hide */
+    ::-webkit-scrollbar { display: none; }
+
+    /* Card flip */
+    .card-area {
+      width: calc(100% - 40px);
+      margin: 0 20px;
+      height: 390px;
+      -webkit-perspective: 1200px;
+      perspective: 1200px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      -webkit-transition: -webkit-transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      border-radius: 20px;
+    }
+    .card.flipped {
+      -webkit-transform: rotateY(180deg);
+      transform: rotateY(180deg);
+    }
+    .face {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px;
+      padding: 22px 20px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid;
+      overflow: hidden;
+    }
+    .face-front {
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      border-color: #312e81;
+      justify-content: center;
+    }
+    .face-back {
+      background: linear-gradient(145deg, #0f1929 0%, #0c1a0f 100%);
+      border-color: #14532d;
+      -webkit-transform: rotateY(180deg);
+      transform: rotateY(180deg);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Filter scroll */
+    .filter-scroll {
+      display: flex;
+      gap: 6px;
+      padding: 0 20px;
+      overflow-x: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-scroll::-webkit-scrollbar { display: none; }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+
+    /* Prevent text selection on tap */
+    .no-select { -webkit-user-select: none; user-select: none; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const cards = [
+  // ── CONCEPT ──────────────────────────────────────────────────────────
+  { id:1, category:"Concept", difficulty:"Basic",
+    front:"What is Portfolio Management? What are its 3 core activities?",
+    back:"Portfolio Management = Process of selecting, constructing and continuously managing an optimal mix of investments that best suits an investor's risk-return profile.\n\n📌 Based on the principle: 'Don't put all eggs in the same basket'\n\n3 Core Activities:\n1️⃣ Selection of Securities\n2️⃣ Construction of all Feasible Portfolios from selected securities\n3️⃣ Deciding optimal weights/proportions for each security\n\nGoal: Build an Optimal Portfolio commensurate with the investor's risk appetite.",
+    exam:false },
+
+  { id:2, category:"Concept", difficulty:"Basic",
+    front:"What are the 7 Objectives of Portfolio Management?",
+    back:"1. 🔒 Safety of Principal\nKeep principal intact including its purchasing power\n\n2. 📊 Stability of Income\nFacilitate accurate planning and reinvestment\n\n3. 📈 Capital Growth\nVia reinvestment in growth securities\n\n4. 🔄 Marketability\nEase of buying/selling — essential for flexibility\n\n5. 💧 Liquidity\nNearness to money — to exploit attractive opportunities\n\n6. 🌐 Diversification\nReduce risk of loss of capital/income across securities & industries\n\n7. 💰 Favourable Tax Status\nMinimise tax burden → improve effective yield\n\n📌 Exam Tip: Write each with 1-line explanation for 4-mark theory Qs.",
+    exam:false },
+
+  { id:3, category:"Concept", difficulty:"Basic",
+    front:"What are the 5 Phases of Portfolio Management?",
+    back:"1️⃣ Security Analysis\n→ Examine risk-return characteristics of individual securities\n→ Use Fundamental Analysis (intrinsic value) or Technical Analysis (price patterns)\n→ Goal: Identify underpriced (buy) / overpriced (sell) securities\n\n2️⃣ Portfolio Analysis\n→ Compute risk-return for each possible combination (Feasible Portfolios)\n\n3️⃣ Portfolio Selection\n→ Identify Efficient Portfolios → Select Optimal Portfolio per investor's risk appetite\n\n4️⃣ Portfolio Revision\n→ Add/remove securities as market conditions or investor needs change\n\n5️⃣ Portfolio Evaluation\n→ Measure actual return vs. risk over time\n→ Use Sharpe, Treynor, Jensen's Alpha ratios\n\n📌 All 5 phases are an ongoing, continuous cycle.",
+    exam:false },
+
+  { id:4, category:"Concept", difficulty:"Intermediate",
+    front:"Differentiate: Systematic Risk vs Unsystematic Risk",
+    back:"📊 SYSTEMATIC RISK (Market Risk / Non-Diversifiable)\n→ Caused by macro/external factors affecting ALL companies\n→ Cannot be eliminated by diversification\n→ Sub-types:\n  • Interest Rate Risk: ↑ interest rate → ↓ security price\n  • Purchasing Power (Inflation) Risk: Erodes real return\n  • Market Risk: General market upswings/downswings (Bull/Bear)\n\n📌 UNSYSTEMATIC RISK (Idiosyncratic / Diversifiable)\n→ Caused by micro/internal factors specific to a company\n→ CAN be eliminated through diversification\n→ Sub-types:\n  • Business Risk: Variability in operating profits (measured by Operating Leverage)\n  • Financial Risk: Presence of debt; measured by Debt-Equity Ratio\n\n──────────────────────────────\nTotal Risk = Systematic Risk + Unsystematic Risk\n\n📌 Beta (β) measures ONLY Systematic Risk.",
+    exam:true },
+
+  { id:5, category:"Concept", difficulty:"Intermediate",
+    front:"Traditional Approach vs Modern Approach (Markowitz) to Portfolio Theory",
+    back:"📜 Traditional Approach:\n→ Focuses on investor profile: age, income, liquidity, tax, risk attitude\n→ Diversify across different securities/assets → assumed enough\n→ Balances equities vs fixed income, high dividend vs growth stocks\n→ Relies on fundamental/technical analysis + expert advice\n→ Flaw: Any diversification was considered beneficial\n\n🔬 Modern Approach (Markowitz, 1950s):\n→ Proved random diversification is NOT optimal\n→ Key Insight: Correlation between securities matters\n→ Same expected return can be achieved at LOWER risk by choosing correctly correlated assets\n→ Provides mathematical framework: Optimize Risk-Return using Mean-Variance analysis\n→ Lower/negative correlation between assets → greater risk reduction\n\n📌 Markowitz questioned 'any basket is fine' — proved 'the RIGHT basket matters'.",
+    exam:false },
+
+  { id:6, category:"Concept", difficulty:"Intermediate",
+    front:"What is the Efficient Frontier? What is the Optimal Portfolio?",
+    back:"📐 Efficient Portfolio:\n→ Highest return for a given level of risk, OR\n→ Lowest risk for a given level of return\n\n📈 Efficient Frontier:\n→ The curve connecting ALL efficient portfolios on a risk-return graph\n→ Any portfolio BELOW the frontier is suboptimal (dominated)\n→ All points on the frontier are equally 'efficient' — choice depends on investor's risk appetite\n\nKey Points on the Frontier:\n• Point A (bottom): Minimum Variance Portfolio — lowest possible risk\n• Point D (top): Maximum return portfolio — also highest risk\n\n⭐ Optimal Portfolio:\n→ The specific point on the Efficient Frontier that matches the investor's indifference curve\n→ Varies across investors (different risk appetite = different optimal portfolio)\n\n📌 Markowitz: 'Move to the frontier — then choose your risk level'",
+    exam:false },
+
+  { id:7, category:"Concept", difficulty:"Intermediate",
+    front:"What is the Capital Asset Pricing Model (CAPM)? What are its key assumptions?",
+    back:"📊 CAPM: Links expected return of an asset to its systematic risk (Beta)\nFormula: Rj = Rf + β(Rm − Rf)\n\nKey Assumptions:\n1. Efficient Market — prices reflect full information; assets fairly priced\n2. Rational Investors — prefer higher return for same risk; risk-averse\n3. All assets divisible and liquid\n4. Investors can borrow/lend freely at risk-free rate\n5. Homogeneous expectations — all investors see same risk-return\n6. No taxes or transaction costs\n7. Single-period investment horizon\n8. Total risk = Systematic + Unsystematic; unsystematic can be diversified away\n\n📌 CAPM says: Compensation is given ONLY for Systematic Risk (Beta)\n📌 Unsystematic risk → not compensated since it can be diversified away.",
+    exam:true },
+
+  { id:8, category:"Concept", difficulty:"Intermediate",
+    front:"What is the Arbitrage Pricing Theory (APT)? How does it differ from CAPM?",
+    back:"📊 APT (Ross): Multi-factor model for expected return\nFormula: E(R) = Rf + λ₁β₁ + λ₂β₂ + … + λₙβₙ\n\nWhere:\n• λₙ = Risk premium for nth macro factor\n• βₙ = Sensitivity to that factor\n\nRoss's 4 Key Factors:\n• Changes in Inflation\n• Level of Industrial Production\n• Risk Premium (spread between T-bills and long bonds)\n• Term Structure of Interest Rates\n\n🆚 APT vs CAPM:\n• CAPM = ONE factor (market beta)\n• APT = MULTIPLE macro factors\n• APT doesn't need market portfolio assumption\n• APT more realistic but harder to implement (which factors?)\n• Both give same result in equilibrium for well-diversified portfolios\n\n📌 APT surprise formula: E(R) = Rf + Σ βₙ(EVₙ − AVₙ) when unexpected changes occur.",
+    exam:false },
+
+  { id:9, category:"Concept", difficulty:"Advanced",
+    front:"What is Capital Market Theory? What is the Capital Market Line (CML)?",
+    back:"📈 Capital Market Theory extends Markowitz by introducing a Risk-Free Asset.\n\nKey Insight: When investors can borrow/lend at risk-free rate, the efficient frontier changes to a straight line — the Capital Market Line (CML).\n\n📐 CML Formula:\nE(Rp) = Rf + [(Rm − Rf) / σm] × σp\n\nWhere:\n• Rf = Risk-free rate\n• Rm = Market return\n• σm = SD of market\n• σp = SD of portfolio\n\nSlope of CML = (Rm − Rf) / σm = Reward per unit of TOTAL risk\n\nPortfolios on CML:\n• Rf to M = Lending portfolios (part in risk-free + part in market portfolio)\n• M to Z = Borrowing portfolios (borrow at Rf to invest more in market)\n\n🆚 CML vs SML:\n• CML → uses σ (total risk) → only for EFFICIENT portfolios\n• SML → uses Beta (systematic risk) → for ALL securities & portfolios",
+    exam:true },
+
+  { id:10, category:"Concept", difficulty:"Intermediate",
+    front:"What is Sharpe's Single Index Model? How does it decompose risk?",
+    back:"📊 Sharpe's Single Index Model assumes stock returns move together ONLY due to the common market index.\n\nReturn Equation:\nRi = αi + βi × Rm + εi\n\nWhere:\n• αi = Intercept (return independent of market)\n• βi = Slope (sensitivity to market)\n• εi = Error term (unsystematic component)\n\nRisk Decomposition:\n• Systematic Risk = βi² × σm²\n• Unsystematic Risk (εi²) = Total Variance − Systematic Risk\n• Also = Variance × (1 − r²) where r = correlation with market\n\nPortfolio Variance:\nσp² = (ΣXiβi)² × σm² + Σ(Xi² × εi²)\n\n📌 r² = Coefficient of Determination → % of return variation explained by market\n📌 βi = 1.5 means stock return changes 1.5% for every 1% change in market",
+    exam:true },
+
+  // ── FORMULA ──────────────────────────────────────────────────────────
+  { id:11, category:"Formula", difficulty:"Basic",
+    front:"📐 Expected Return Formula — Probability-based & Historical",
+    back:"📊 When Probabilities Given:\nE(R) = Σ [Xi × p(Xi)]\n= Sum of (each possible return × its probability)\n\nExample:\nReturns: 20%, 30%, 40%, 50%, 60%\nProb:     0.20, 0.20, 0.40, 0.10, 0.10\nE(R) = (0.20×0.20)+(0.30×0.20)+(0.40×0.40)+(0.50×0.10)+(0.60×0.10)\n     = 0.04+0.06+0.16+0.05+0.06 = 0.37 = 37%\n\n──────────────────────────────\n📊 When Historical Data Given:\nE(R) = (x₁ + x₂ + … + xₙ) / n\n= Simple Arithmetic Mean\n\nExample:\nReturns: 9.5, 7.0, 11.0, −6.0, 2.5\nSum = 24.00 → Mean = 24/5 = 4.80%\n\n📌 Use probability-weighted for forward-looking; use mean for historical data.",
+    exam:true },
+
+  { id:12, category:"Formula", difficulty:"Basic",
+    front:"📐 Variance & Standard Deviation Formula (Risk Measurement)",
+    back:"📊 When Probabilities Given:\nσ² = Σ [(Xi − X̄)² × p(Xi)]\n\nExample:\nE(R) = 37%; Using above data:\nσ² = 0.0289×0.20 + 0.0049×0.20 + 0.0009×0.40 + 0.0169×0.10 + 0.0529×0.10\n   = 0.00578 + 0.00098 + 0.00036 + 0.00169 + 0.00529\n   = 0.0141\nσ = √0.0141 = 11.87%\n\n──────────────────────────────\n📊 When Historical Data Given:\nσ² = Σ (xi − x̄)² / n\n\nExample:\nReturns: 9.5, 7.0, 11.0, −6.0, 2.5 → Mean = 4.80\nΣ(deviations²) = 22.09+4.84+38.44+116.64+5.29 = 187.30\nσ² = 187.30/5 = 37.46 → σ = 6.12%\n\n📌 σ = Standard Deviation = Square root of Variance\n📌 Higher σ = Higher Risk",
+    exam:true },
+
+  { id:13, category:"Formula", difficulty:"Intermediate",
+    front:"📐 Portfolio Return & Portfolio Risk (2-Asset Portfolio) — Complete Formulas",
+    back:"📊 Portfolio Return:\nRp = w₁R₁ + w₂R₂\n(Weighted average of individual returns)\n\n──────────────────────────────\n📊 Portfolio Variance:\nσp² = w₁²σ₁² + w₂²σ₂² + 2w₁w₂r₁₂σ₁σ₂\n\nWhere:\n• w₁, w₂ = weights\n• σ₁, σ₂ = standard deviations\n• r₁₂ = correlation coefficient\n\n3 Special Cases:\n✅ r = +1 → σp = w₁σ₁ + w₂σ₂ (maximum risk, no benefit)\n✅ r = −1 → σp = |w₁σ₁ − w₂σ₂| (minimum risk, can reach 0)\n✅ r = 0  → σp = √(w₁²σ₁² + w₂²σ₂²) (moderate reduction)\n\n📌 Risk reduction is GREATEST when correlation is NEGATIVE\n📌 r = −1 → Perfect negative correlation → Portfolio can be fully risk-free",
+    exam:true },
+
+  { id:14, category:"Formula", difficulty:"Intermediate",
+    front:"📐 Covariance & Correlation Coefficient — Formulas & Interpretation",
+    back:"📊 Covariance Formula (Historical):\nCovAB = Σ[(RA − R̄A)(RB − R̄B)] / N\n\nExample:\nYear: 1  2  3  4\nRx: 11 13 17 19 → R̄x = 15\nRy: 18 14 11  9 → R̄y = 13\nProducts: −20, −2, −4, −16 → Sum = −42\nCov = −42/4 = −10.5\n\n──────────────────────────────\n📊 Correlation Coefficient:\nr = CovAB / (σA × σB)\n\nInterpretation:\n• r = +1: Returns move perfectly TOGETHER\n• r = −1: Returns move perfectly OPPOSITE\n• r = 0: Returns are INDEPENDENT (no relationship)\n• −1 < r < 0: Partial negative correlation → best for diversification\n\n📌 Covariance shows direction of relationship; Correlation shows MAGNITUDE (−1 to +1)\n📌 Negative covariance → excellent for portfolio risk reduction",
+    exam:true },
+
+  { id:15, category:"Formula", difficulty:"Advanced",
+    front:"📐 CAPM / Security Market Line (SML) Formula & Beta Calculation",
+    back:"📊 CAPM Formula (SML):\nRj = Rf + βj × (Rm − Rf)\n\nWhere:\n• Rj = Required return on security j\n• Rf = Risk-free rate\n• βj = Beta of security j\n• (Rm − Rf) = Market Risk Premium\n\n──────────────────────────────\n📊 Beta Calculation:\nβ = Cov(Ri, Rm) / σm²\n   = (σi × r) / σm\n\nAlternatively via regression:\nβ = [ΣXY − n·X̄·Ȳ] / [ΣY² − n·Ȳ²]\n(where X = security returns, Y = market returns)\n\n📌 β = 1: Moves with market\n📌 β > 1: More volatile than market (Aggressive Stock)\n📌 β < 1: Less volatile than market (Defensive Stock)\n📌 β = 0: Risk-free asset\n\nExample:\nRf = 5%, Rm = 13%, β = 1.2\nRj = 5 + 1.2(13 − 5) = 5 + 9.6 = 14.6%",
+    exam:true },
+
+  { id:16, category:"Formula", difficulty:"Advanced",
+    front:"📐 Sharpe Ratio, Treynor Ratio & Jensen's Alpha — All Three Formulas",
+    back:"📊 Sharpe Ratio:\nS = (Rp − Rf) / σp\n→ Risk Premium per unit of TOTAL Risk (SD)\n→ Suitable for non-fully-diversified or overall portfolios\n→ Higher = Better\n\n📊 Treynor Ratio:\nT = (Rp − Rf) / βp\n→ Risk Premium per unit of SYSTEMATIC Risk (Beta)\n→ Suitable for well-diversified portfolios\n→ Higher = Better\n\n📊 Jensen's Alpha:\nα = Rp − [Rf + βp(Rm − Rf)]\n= Actual Return − CAPM Required Return\n\nInterpretation:\n• α > 0: Portfolio OUTPERFORMED (good manager)\n• α < 0: Portfolio UNDERPERFORMED\n• α = 0: Performed exactly per market risk\n\n📌 If Sharpe & Treynor give SAME ranking → perfectly diversified\n📌 If rankings DIFFER → some unsystematic risk exists",
+    exam:true },
+
+  { id:17, category:"Formula", difficulty:"Advanced",
+    front:"📐 Sharpe's Optimal Portfolio — Excess Return to Beta (Ci & C*) Formula",
+    back:"Steps to Build Sharpe's Optimal Portfolio:\n\n1️⃣ Calculate Excess Return to Beta ratio for each stock:\n   (Ri − Rf) / βi   ← Treynor's ratio for individual stocks\n\n2️⃣ Rank all stocks from highest to lowest ratio\n\n3️⃣ Calculate Ci for each ranked stock:\nCi = [σm² × Σ{(Ri−Rf)βi / σεi²}] / [1 + σm² × Σ{βi² / σεi²}]\n\nWhere σεi² = Unsystematic variance of stock i\n\n4️⃣ C* = Highest value of Ci → Cut-off Rate\n\n5️⃣ Include all stocks where (Ri−Rf)/βi > C*\n\n6️⃣ Weights:\nZi = (βi/σεi²) × [(Ri−Rf)/βi − C*]\nXi = Zi / ΣZi\n\n📌 C* is the threshold: only stocks ABOVE C* make it into the portfolio\n📌 Once C* known, all higher-ranked stocks auto-qualify",
+    exam:true },
+
+  { id:18, category:"Formula", difficulty:"Intermediate",
+    front:"📐 APT Formula & Surprise Factor Variant",
+    back:"📊 Standard APT:\nE(Ri) = Rf + λ₁β₁ + λ₂β₂ + … + λₙβₙ\n\nWhere:\n• λₙ = Risk premium for each macro factor\n• βₙ = Sensitivity to that factor\n\nExample (ICAI Illustration):\nRisk-free rate = 8%\nFactor 1 (Market): λ = 4%, β = 1.3\nFactor 2 (Growth): λ = 1%, β = 0.3\nFactor 3 (Inflation): λ = −4%, β = 0.2\n\nE(R) = 8% + 1.3×4% + 0.3×1% + 0.2×(−4%)\n     = 8% + 5.2% + 0.3% − 0.8%\n     = 12.7%\n\n──────────────────────────────\n📊 APT with Surprise Factors:\nE(R) = Rf + Σβₙ(EVₙ − AVₙ)\n\nWhere (EV − AV) = Unexpected change in factor\n\n📌 If no surprises occur → Actual return = Expected return\n📌 Ross's 4 factors: Inflation, Industrial Production, Risk Premium, Interest Rate Term Structure",
+    exam:true },
+
+  // ── PRACTICAL ────────────────────────────────────────────────────────
+  { id:19, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 EXAM Q: Rf = 5%, Rm = 13%. Portfolio: 70% T-bills + 30% Market. Find Beta and Required Return.",
+    back:"Step 1 — Beta of Portfolio:\nBeta of T-bills = 0 (risk-free)\nBeta of Market = 1.0\n\nPortfolio β = 0.70 × 0 + 0.30 × 1 = 0.30\n\nStep 2 — Required Return (CAPM):\nRj = Rf + β(Rm − Rf)\n   = 5% + 0.30 × (13% − 5%)\n   = 5% + 0.30 × 8%\n   = 5% + 2.4%\n   = 7.40%\n\n──────────────────────────────\n📌 Market Risk Premium = Rm − Rf = 13% − 5% = 8%\n📌 Beta is always the WEIGHTED AVERAGE of individual betas\n📌 Adding T-bills LOWERS portfolio beta and therefore LOWERS required return",
+    exam:true },
+
+  { id:20, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 Rf = 10%, Rm = 15%, β = 1.2. Projected return = 18%. Is stock correctly valued? What's your strategy?",
+    back:"Step 1 — Required Return (CAPM):\nRj = Rf + β(Rm − Rf)\n   = 10 + 1.2 × (15 − 10)\n   = 10 + 6 = 16%\n\nStep 2 — Compare:\nRequired (CAPM) = 16%\nProjected Return = 18%\n\nProjected > Required → Stock is UNDERVALUED\n(Gives more return than it should for its risk level)\n\nStep 3 — Decision:\n✅ BUY the stock\n\n──────────────────────────────\n📌 Decision Rules:\n• Projected > CAPM Required → Undervalued → BUY\n• Projected < CAPM Required → Overvalued → SELL\n• Projected = CAPM Required → Correctly Valued → HOLD\n\n📌 From price angle:\n• Actual Price < CAPM Price → Undervalued\n• Actual Price > CAPM Price → Overvalued",
+    exam:true },
+
+  { id:21, category:"Practical", difficulty:"Intermediate",
+    front:"🧮 Security SD = 25%, Market SD = 15%, Correlation = 0.8. Find Beta. If Rf = 6%, Rm = 14%, find required return.",
+    back:"Step 1 — Beta:\nβ = (σi × r) / σm\n  = (25% × 0.8) / 15%\n  = 20% / 15%\n  = 1.333\n\nStep 2 — Required Return (CAPM):\nRj = Rf + β(Rm − Rf)\n   = 6 + 1.333 × (14 − 6)\n   = 6 + 1.333 × 8\n   = 6 + 10.67\n   = 16.67%\n\n──────────────────────────────\n📌 Alternative Beta Formula:\nβ = Cov(i, m) / Var(m)\n  = (σi × r × σm) / σm²\n  = (σi × r) / σm ← same result\n\n📌 β > 1 → stock is more volatile than market (aggressive)\n📌 Risk Premium earned = β × Market Risk Premium",
+    exam:true },
+
+  { id:22, category:"Practical", difficulty:"Advanced",
+    front:"🧮 Portfolio has 50% in X (σ=√6.30) and 50% in Y (σ=√5.86). Market variance = 2.25. βx=0.71, βy=0.685. Unsystematic: X=5.166, Y=4.804. Find portfolio variance.",
+    back:"Using Sharpe Single Index Model:\nσp² = (ΣXiβi)² × σm² + Σ(Xi² × εi²)\n\nStep 1 — Systematic component:\nΣXiβi = 0.5 × 0.71 + 0.5 × 0.685\n       = 0.355 + 0.3425 = 0.6975\n\n(0.6975)² × 2.25 = 0.4865 × 2.25 = 1.094\n\nStep 2 — Unsystematic component:\n(0.5)² × 5.166 + (0.5)² × 4.804\n= 0.25 × 5.166 + 0.25 × 4.804\n= 1.2915 + 1.201 = 2.493\n\nStep 3 — Portfolio Variance:\nσp² = 1.094 + 2.493 = 3.587\n\n──────────────────────────────\n📌 Single Index model greatly simplifies computation vs full Markowitz covariance matrix\n📌 Requires only betas + unsystematic variances (not every pair's covariance)",
+    exam:true },
+
+  { id:23, category:"Practical", difficulty:"Advanced",
+    front:"🧮 EXAM Q: Portfolio A: Return=30%, SD=11%. Portfolio B: Return=25%, SD=5%. Rf=8%. Which is better using Sharpe Ratio?",
+    back:"Sharpe Ratio = (Rp − Rf) / σp\n\nPortfolio A:\nSA = (30% − 8%) / 11% = 22/11 = 2.00\n\nPortfolio B:\nSB = (25% − 8%) / 5% = 17/5 = 3.40\n\n──────────────────────────────\n✅ Portfolio B is BETTER (Sharpe = 3.4 > 2.0)\n\nExplanation:\nAlthough A has higher absolute return (30% > 25%),\nB generates MORE return PER UNIT OF RISK.\nB has significantly lower volatility (SD = 5% vs 11%).\n\n📌 Sharpe Ratio corrects for risk — don't judge by return alone!\n📌 Rule: Higher Sharpe = Better risk-adjusted performance\n📌 Use this ratio especially when comparing OVERALL portfolios",
+    exam:true },
+
+  { id:24, category:"Practical", difficulty:"Advanced",
+    front:"🧮 Rebalancing Example: Portfolio = ₹1,00,000. Floor = ₹75,000. Multiplier = 2. Stock rises to 150 (from 100). Apply CPPI — what changes?",
+    back:"Initial CPPI Setup:\nCushion = Portfolio − Floor = 1,00,000 − 75,000 = ₹25,000\nInvestment in Shares = Multiplier × Cushion = 2 × 25,000 = ₹50,000\nRemaining in Bonds = ₹50,000\n\nAfter Market rises to 150 (50% rise):\nShares value = 50,000 × 1.5 = ₹75,000\nBonds value = ₹50,000 (unchanged)\nNew Portfolio Value = ₹1,25,000\nNew Cushion = 1,25,000 − 75,000 = ₹50,000\n\nNew Required Share Investment = 2 × 50,000 = ₹1,00,000\n\n✅ Action: SELL ₹25,000 of Bonds → BUY ₹25,000 of Shares\n\n──────────────────────────────\n📌 CPPI Rule: BUY shares as they RISE; SELL shares as they FALL\n📌 This is OPPOSITE to Constant Mix strategy (which buys falling assets)\n📌 CPPI payoff = Convex; Constant Mix payoff = Concave",
+    exam:true },
+
+  // ── THEORY Q&A ───────────────────────────────────────────────────────
+  { id:25, category:"Theory Q&A", difficulty:"Basic",
+    front:"What are the assumptions of the Markowitz Model of Portfolio Theory?",
+    back:"Markowitz Model Assumptions:\n\n1. Return on investment adequately summarises the outcome of an investment\n\n2. Investors can visualise a probability distribution of rates of return\n\n3. Investors' risk estimates are proportional to the variance of return they perceive\n\n4. Investment decisions are based on TWO criteria only:\n   → Expected Return (maximise)\n   → Variance of Return (minimise)\n\n5. Investors are risk-averse: prefer less risk for same expected return\n\n6. Utility is a function of only mean and variance of returns\n\n7. All assets are infinitely divisible and liquid\n\n📌 The model finds Mean-Variance Efficient portfolios → then selects the one matching investor's indifference curve\n📌 Limitation: Requires computing every pairwise covariance (n(n−1)/2 inputs) → computationally intensive",
+    exam:false },
+
+  { id:26, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"What are the LIMITATIONS of CAPM? (5 key limitations)",
+    back:"1. 📐 Beta Estimation\n→ Based on historical data; β in the future may differ from the past\n→ Also, estimation method (time period, market index chosen) affects β\n\n2. 🔒 Unrealistic Assumptions\n→ Risk-free borrowing/lending at same rate is not possible in reality\n→ No taxes, no transaction costs → impractical\n\n3. 📊 Systematic Risk Only\n→ CAPM ignores unsystematic risk which may still be relevant for undiversified investors\n\n4. 📰 Information Availability\n→ Difficult to get accurate risk-free rate (multiple T-bill rates exist)\n→ Market portfolio return changes constantly\n\n5. ⏱ Single Period Model\n→ Assumes single investment horizon → not suitable for multi-period decisions\n\n📌 Despite limitations, CAPM remains widely used for cost of equity, project evaluation, and portfolio benchmarking",
+    exam:false },
+
+  { id:27, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"Compare Active Portfolio Strategy vs Passive Portfolio Strategy",
+    back:"🎯 Active Portfolio Strategy (APS):\n→ Premise: Markets are INEFFICIENT — opportunities exist\n→ Goal: OUTPERFORM market after adjusting for risk (generate positive Alpha)\n→ Methods:\n  1. Market Timing: Shift allocation based on market forecast\n  2. Sector Rotation: Overweight/underweight sectors based on outlook\n  3. Security Selection: Pick mispriced stocks via FA/TA\n  4. Specialised Concepts: Growth stocks, out-of-favour stocks, asset stocks\n→ Higher costs but potential for higher alpha\n\n📊 Passive Portfolio Strategy:\n→ Premise: Markets are EFFICIENT — can't consistently beat the market\n→ Goal: Match benchmark return at lowest cost\n→ Guidelines:\n  1. Create well-diversified portfolio\n  2. Minimise transaction costs and portfolio revision\n→ Buy-and-Hold or Index replication approach\n\n📌 Fisher Black: Investors who exit market lose relative to a simple Buy-and-Hold strategy",
+    exam:false },
+
+  { id:28, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"Compare the 3 Portfolio Rebalancing Policies: Buy & Hold, Constant Mix, CPPI",
+    back:"📋 Buy & Hold (Do Nothing):\n→ Set floor, invest remainder in stocks, NEVER rebalance\n→ Stock portion drifts with market\n→ Portfolio value LINEARLY related to stock value\n→ Payoff: Straight line (linear)\n→ Best when: stocks outperform bonds steadily\n\n🔄 Constant Mix (Do Something):\n→ Maintain fixed stock:bond ratio (e.g., 60:40) always\n→ Rebalance when prices move by a set %\n→ Buy stocks when they FALL; sell when they RISE\n→ Payoff: Concave\n→ Best when: Markets are volatile/oscillating\n\n🛡 CPPI (Constant Proportion Portfolio Insurance):\n→ Set floor; invest multiplier × cushion in stocks\n→ Buy stocks when they RISE; sell when they FALL\n→ Payoff: Convex\n→ Best when: Trending (bull) markets\n→ Performs poorly in sharp reversals\n\n📌 CPPI = opposite of Constant Mix\n📌 Formula: Stock Investment = Multiplier × (Portfolio Value − Floor)",
+    exam:true },
+
+  { id:29, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"What are Fixed Income Portfolio Management Strategies?",
+    back:"📊 PASSIVE Strategies:\n1. Buy & Hold: No churning; maintain initial selection; may set duration = benchmark\n2. Indexation: Replicate a predetermined bond index closely\n3. Immunization: Match duration of portfolio = investment horizon to neutralise interest rate risk. Popular in pension funds.\n4. Cash Flow Matching: Buy Zero Coupon Bonds maturing at exact dates of liabilities\n\n📊 ACTIVE Strategies:\n1. Forecasting Returns/Interest Rates:\n   • Bullet: Concentrate in ONE maturity (e.g., all in 5-year bonds)\n   • Barbell: Equal split in SHORTEST + LONGEST maturity (e.g., 1-yr + 10-yr)\n   • Ladder: Equal amounts across MULTIPLE maturities (e.g., 1yr to 5yr, 20% each)\n\n2. Yield Spread Analysis\n3. Credit Analysis\n4. Duration/Convexity Management\n\n📌 Interest Rate vs Bond Price: Inverse relationship\n📌 Longer duration bonds → higher interest rate sensitivity",
+    exam:false },
+
+  { id:30, category:"Theory Q&A", difficulty:"Basic",
+    front:"What are Alternative Investments (AIs)? Key features and types?",
+    back:"🏛 Alternative Investments = Non-traditional asset classes beyond listed stocks/bonds\n\nKey Features:\n1. Higher Risk-Return potential vs traditional investments\n2. Low correlation with traditional markets (great diversifier)\n3. Requires specialised knowledge\n\nKey Disadvantages:\n❌ Illiquid — limited secondary market\n❌ Less Transparent — limited public information\n❌ Extensive research required\n❌ Often highly leveraged\n\n📋 Types of Alternative Investments:\n1. Real Estate (tangible; land, buildings)\n2. Gold\n3. Private Equity\n4. REITs (Real Estate Investment Trusts)\n5. Hedge Funds\n6. ETFs (Exchange Traded Funds)\n7. Mutual Funds\n8. Commodities\n9. Distressed Securities\n\n📌 Real Estate is a tangible form of asset unlike paper/demat financial claims",
+    exam:false },
+
+  { id:39, category:"Theory Q&A", difficulty:"Intermediate",
+    front:"What are the 4 Asset Allocation Strategies?",
+    back:"Many portfolios contain multiple asset categories. The 4 strategies are:\n\n1. 🔗 Integrated Asset Allocation\n→ Examines BOTH capital market conditions AND investor objectives/constraints together\n→ Allocation that best serves investor's needs while incorporating market forecast\n→ Most comprehensive approach\n\n2. 📊 Strategic Asset Allocation\n→ Generates optimal portfolio mixes based on returns, risk & covariances using HISTORICAL data\n→ Adjusted periodically to restore target allocation\n→ Within the context of investor's objectives and constraints\n\n3. 🔄 Tactical Asset Allocation\n→ Investor's risk tolerance assumed CONSTANT\n→ Asset allocation changed based on expectations about CAPITAL MARKET CONDITIONS\n→ More dynamic than strategic; adjusts to market outlook\n\n4. 🛡 Insured Asset Allocation\n→ Risk exposure adjusted for CHANGING PORTFOLIO VALUES (wealth)\n→ As portfolio value increases → more risk taken; as it decreases → less risk\n→ Similar in spirit to CPPI (protects against downside)\n\n📌 Exam Tip: Integrated = most holistic; Tactical = market-driven; Insured = wealth-driven",
+    exam:false },
+
+  // ── QUICK FIRE ───────────────────────────────────────────────────────
+  { id:31, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ TRUE or FALSE:\n\nDiversification can eliminate ALL risk from a portfolio.",
+    back:"❌ FALSE\n\nDiversification can ONLY eliminate UNSYSTEMATIC (diversifiable) risk.\n\nSystematic risk (market risk) CANNOT be eliminated by diversification — it affects ALL assets.\n\n──────────────────────────────\n📌 Total Risk = Systematic + Unsystematic\n• As number of securities increases → Unsystematic risk → 0\n• Systematic risk remains CONSTANT regardless of portfolio size\n\nReal-life parallel:\nNo matter how many stocks you hold — a market crash, recession or interest rate hike will still impact your portfolio.\n\n📌 This is why CAPM says: only SYSTEMATIC RISK is priced/compensated.",
+    exam:false },
+
+  { id:32, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ FILL IN THE BLANK:\n\nA Beta of ___ means the security moves exactly with the market. A Beta of ___ means it's twice as volatile.",
+    back:"📌 β = 1.0 → Moves EXACTLY with the market\n\n📌 β = 2.0 → Twice as volatile as the market\n(If market rises/falls by 1%, stock rises/falls by 2%)\n\n──────────────────────────────\nQuick Reference:\n• β > 1 → Aggressive stock (amplifies market moves)\n• β < 1 → Defensive stock (dampens market moves)\n• β = 0 → Risk-free asset (no market sensitivity)\n• β < 0 → Inverse to market (e.g., gold in some conditions)\n\n📌 Weighted average beta of all market securities = 1.0\n📌 Beta is the ONLY relevant risk measure in CAPM\n📌 Beta for T-bills / Government Securities = 0",
+    exam:false },
+
+  { id:33, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ MATCH: Which formula uses which risk measure?\n\nA. CML (Capital Market Line)\nB. SML (Security Market Line)\nC. Sharpe Ratio\nD. Treynor Ratio",
+    back:"A. CML → Uses σp (TOTAL risk — Standard Deviation of Portfolio)\n→ Only for EFFICIENT PORTFOLIOS on the efficient frontier\n\nB. SML → Uses β (SYSTEMATIC risk — Beta)\n→ For ALL securities and portfolios (efficient or not)\n\nC. Sharpe Ratio → Uses σp (Total Risk / Standard Deviation)\n→ Risk premium per unit of TOTAL risk\n\nD. Treynor Ratio → Uses β (Beta / Systematic Risk)\n→ Risk premium per unit of SYSTEMATIC risk\n\n──────────────────────────────\n📌 Memory Trick:\n• CML & Sharpe → Standard Deviation (Total Risk)\n• SML & Treynor → Beta (Systematic Risk)\n\n📌 CML applies ONLY to efficient portfolios\n📌 SML applies to ANY security (efficient or not)",
+    exam:false },
+
+  { id:34, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ What happens when r (correlation) between two assets = −1, 0, and +1?",
+    back:"📊 Correlation = +1 (Perfect Positive):\n→ Assets move EXACTLY together\n→ NO diversification benefit\n→ σp = w₁σ₁ + w₂σ₂ (maximum portfolio risk)\n\n📊 Correlation = 0 (Independent):\n→ Returns are UNRELATED\n→ Moderate diversification benefit\n→ σp = √(w₁²σ₁² + w₂²σ₂²)\n\n📊 Correlation = −1 (Perfect Negative):\n→ Assets move EXACTLY opposite\n→ MAXIMUM diversification benefit\n→ Portfolio can be made RISK-FREE!\n→ σp = |w₁σ₁ − w₂σ₂|\n→ Zero risk when: w₁/w₂ = σ₂/σ₁\n\n──────────────────────────────\n📌 In real life, most assets have correlation between 0 and +1\n📌 Perfect −1 correlation is extremely rare\n📌 Even partial negative correlation meaningfully reduces portfolio risk",
+    exam:false },
+
+  { id:35, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ IDENTIFY: Jensen's Alpha = +2%. What does this tell you about the fund manager?",
+    back:"✅ Alpha = +2% → POSITIVE ALPHA\n\n→ The portfolio OUTPERFORMED the CAPM expected return by 2%\n→ The fund manager generated EXCESS RETURN above what the market risk justified\n→ Indicates superior fund management / stock-picking ability\n\n──────────────────────────────\nFormula Reminder:\nα = Actual Rp − [Rf + β(Rm − Rf)]\n  = Actual Return − CAPM Required Return\n\nInterpretation:\n• α > 0 → Manager OUTPERFORMED ✅ (skilled manager)\n• α = 0 → Manager matched CAPM expectation ⚖️\n• α < 0 → Manager UNDERPERFORMED ❌ (poor manager)\n\n📌 Short-term alpha (< 1 year) is not valid — minimum 3-year period needed for reliable judgment\n📌 Positive alpha = Fund manager adding value above market compensation for risk",
+    exam:false },
+
+  { id:36, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ What is the difference between Feasible Portfolio, Efficient Portfolio and Optimal Portfolio?",
+    back:"📦 Feasible Portfolio:\n→ Any possible combination of chosen securities\n→ ALL portfolios that can be constructed (the entire shaded region on the risk-return graph)\n→ Most are suboptimal\n\n⭐ Efficient Portfolio:\n→ A feasible portfolio that is NOT dominated\n→ Either: Highest return for a given risk level\n→ Or: Lowest risk for a given return level\n→ Lies on the EFFICIENT FRONTIER (the curved boundary)\n\n🎯 Optimal Portfolio:\n→ The SINGLE best portfolio for a SPECIFIC investor\n→ Point where investor's indifference curve is TANGENT to the Efficient Frontier\n→ Different for different investors (depends on risk appetite)\n\n──────────────────────────────\n📌 Hierarchy: Feasible ⊃ Efficient ⊃ Optimal (1 point)\n📌 Optimal portfolio is UNIQUE per investor",
+    exam:false },
+
+  { id:37, category:"Quick Fire", difficulty:"Intermediate",
+    front:"⚡ Which type of analysis is best under which Market Efficiency level?\n(Technical / Fundamental / Random Selection)",
+    back:"Market Efficiency Level → Best Approach:\n\n1️⃣ Inefficient Market\n→ Best: Technical Analysis\n→ Past patterns are useful; mispricing exists and persists\n\n2️⃣ Weak Form Efficiency\n→ Best: Fundamental Analysis\n→ Price history = no edge; but fundamentals can still reveal value\n\n3️⃣ Semi-Strong Form Efficiency\n→ Best: Fundamental Analysis (still good)\n→ All public info reflected in price; fundamentals + private info helps\n\n4️⃣ Strong Form Efficiency\n→ Best: Random Selection\n→ ALL info (including insider) reflected; no analysis adds value\n\n📌 EMH = Efficient Market Hypothesis\n📌 In practice, markets are NEVER perfectly efficient\n📌 Random Walk Theory: Share price movements are random; neither FA nor TA gives sustained advantage",
+    exam:false },
+
+  { id:38, category:"Quick Fire", difficulty:"Basic",
+    front:"⚡ Full forms & 1-line meaning:\nCAPM | CML | SML | APT | EMH | CPPI | APS",
+    back:"📋 Quick Reference:\n\nCAPM → Capital Asset Pricing Model\n(Links expected return to systematic risk via Beta)\n\nCML → Capital Market Line\n(Risk-return line for EFFICIENT portfolios; uses SD)\n\nSML → Security Market Line\n(Risk-return line for ALL securities; uses Beta — this IS CAPM plotted graphically)\n\nAPT → Arbitrage Pricing Theory\n(Multi-factor alternative to CAPM; uses macro factors)\n\nEMH → Efficient Market Hypothesis\n(Markets fully reflect available information; no consistent excess returns)\n\nCPPI → Constant Proportion Portfolio Insurance\n(Rebalancing: buy shares as they rise; set floor value)\n\nAPS → Active Portfolio Strategy\n(Aim to outperform market via timing, rotation, selection)\n\n📌 SML and CML differ in risk measure — this is a COMMON MCQ trap",
+    exam:false },
+];
+
+const CATEGORIES = ["All","Concept","Formula","Practical","Theory Q&A","Quick Fire"];
+const CAT_COLORS = {
+  Concept:"#3B82F6", Formula:"#8B5CF6", Practical:"#F59E0B",
+  "Theory Q&A":"#10B981", "Quick Fire":"#EF4444"
+};
+const DIFF_COLORS = { Basic:"#22C55E", Intermediate:"#F59E0B", Advanced:"#EF4444" };
+
+function App() {
+  const [page, setPage] = useState("home");
+  const [selCat, setSelCat] = useState("All");
+  const [examOnly, setExamOnly] = useState(false);
+  const [deck, setDeck] = useState(cards);
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known, setKnown] = useState(new Set());
+  const [unknown, setUnknown] = useState(new Set());
+  const [shuffled, setShuffled] = useState(false);
+  const touchX = useRef(null);
+  const touchY = useRef(null);
+
+  useEffect(() => {
+    let f = cards;
+    if (selCat !== "All") f = f.filter(c => c.category === selCat);
+    if (examOnly) f = f.filter(c => c.exam);
+    if (shuffled) f = [...f].sort(() => Math.random() - 0.5);
+    setDeck(f);
+    setIdx(0);
+    setFlipped(false);
+  }, [selCat, examOnly, shuffled]);
+
+  const cur = deck[idx] || null;
+  const progress = deck.length ? Math.round((idx / deck.length) * 100) : 0;
+  const knownCount = [...known].filter(id => deck.find(c => c.id === id)).length;
+  const unknownCount = [...unknown].filter(id => deck.find(c => c.id === id)).length;
+
+  const go = (dir) => {
+    setFlipped(false);
+    setTimeout(() => {
+      setIdx(i => {
+        if (dir === 1 && i < deck.length - 1) return i + 1;
+        if (dir === -1 && i > 0) return i - 1;
+        return i;
+      });
+    }, 80);
+  };
+
+  const mark = (type) => {
+    if (!cur) return;
+    if (type === "know") {
+      setKnown(s => new Set([...s, cur.id]));
+      setUnknown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    } else {
+      setUnknown(s => new Set([...s, cur.id]));
+      setKnown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    }
+    go(1);
+  };
+
+  const startStudy = (cat, examOnlyMode) => {
+    setSelCat(cat);
+    setExamOnly(examOnlyMode || false);
+    setShuffled(false);
+    setIdx(0);
+    setFlipped(false);
+    setPage("study");
+  };
+
+  const onTouchStart = (e) => {
+    touchX.current = e.touches[0].clientX;
+    touchY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    touchX.current = null;
+    if (dy > 50) return;
+    if (dx < -50) go(1);
+    else if (dx > 50) go(-1);
+  };
+
+  // ── HOME ──────────────────────────────────────────────────────────────
+  if (page === "home") return (
+    <div style={S.page}>
+      <div style={S.homeWrap}>
+        {/* Header */}
+        <div style={S.header}>
+          <div style={S.badge}>CA FINALS · GROUP I · AFM</div>
+          <div style={S.title}>Portfolio Management</div>
+          <div style={S.subtitle}>Chapter 6 · Advanced Financial Management</div>
+          <div style={S.statsRow}>
+            <Pill num={cards.length} lbl="Cards"/>
+            <Pill num={5} lbl="Categories"/>
+            <Pill num={cards.filter(c=>c.exam).length} lbl="Exam Qs"/>
+          </div>
+        </div>
+
+        {/* Category grid */}
+        <div style={S.grid}>
+          {CATEGORIES.filter(c=>c!=="All").map(c => (
+            <button key={c} style={{...S.catCard, borderColor: CAT_COLORS[c]}}
+              onClick={() => startStudy(c, false)}>
+              <div style={{...S.catDot, background: CAT_COLORS[c]}}/>
+              <div style={S.catName}>{c}</div>
+              <div style={S.catCnt}>{cards.filter(x=>x.category===c).length} cards</div>
+            </button>
+          ))}
+        </div>
+
+        <button style={S.mainBtn} onClick={() => startStudy("All", false)}>
+          Study All {cards.length} Cards →
+
+        </button>
+        <button style={{...S.mainBtn, ...S.outlineBtn}} onClick={() => startStudy("All", true)}>
+          ⚡ Exam Questions Only
+        </button>
+        <button style={{...S.mainBtn, ...S.statsBtn}} onClick={() => setPage("stats")}>
+          📊 View Progress
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── STATS ─────────────────────────────────────────────────────────────
+  if (page === "stats") {
+    const pct = Math.round(knownCount / (deck.length || 1) * 100);
+    return (
+      <div style={S.page}>
+        <div style={S.homeWrap}>
+          <button style={S.backBtn} onClick={() => setPage("home")}>← Back</button>
+          <div style={{...S.title, marginBottom:24}}>Your Progress</div>
+          <div style={S.statsDetail}>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#22C55E"}}>{knownCount}</div>
+              <div style={S.bigLbl}>✅ Know It</div>
+            </div>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#EF4444"}}>{unknownCount}</div>
+              <div style={S.bigLbl}>🔁 Review</div>
+            </div>
+            <div style={S.statBlock}>
+              <div style={{...S.bigNum, color:"#64748b"}}>{deck.length - knownCount - unknownCount}</div>
+              <div style={S.bigLbl}>⏳ Unseen</div>
+            </div>
+          </div>
+          <div style={S.pBarWrap}>
+            <div style={{...S.pBarFill, width:`${pct}%`, background:"linear-gradient(90deg,#22C55E,#86efac)"}}/>
+          </div>
+          <div style={{color:"#94a3b8", textAlign:"center", fontSize:13, marginTop:8, fontFamily:"Arial,sans-serif"}}>
+            {pct}% mastered
+          </div>
+          {unknownCount > 0 && (
+            <button style={{...S.mainBtn, marginTop:28}}
+              onClick={() => {
+                const ids = new Set([...unknown].filter(id => deck.find(c=>c.id===id)));
+                setDeck(prev => prev.filter(c => ids.has(c.id)));
+                setIdx(0); setFlipped(false); setPage("study");
+              }}>
+              🔁 Review Weak Cards ({unknownCount})
+            </button>
+          )}
+          <button style={{...S.mainBtn, ...S.outlineBtn, marginTop:10}}
+            onClick={() => { setKnown(new Set()); setUnknown(new Set()); }}>
+            Reset Progress
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STUDY ─────────────────────────────────────────────────────────────
+  return (
+    <div style={S.page} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Top Bar */}
+      <div style={S.topBar}>
+        <button style={S.iconBtn} onClick={() => { setExamOnly(false); setPage("home"); }}>🏠</button>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <div style={{color:"#e2e8f0",fontSize:14,fontWeight:600,fontFamily:"Arial,sans-serif"}}>
+            {idx+1} / {deck.length}
+          </div>
+          {cur && <div style={{...S.diffBadge, background: DIFF_COLORS[cur.difficulty]||"#666"}}>{cur.difficulty}</div>}
+        </div>
+        <button style={S.iconBtn} onClick={() => setPage("stats")}>📊</button>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{width:"100%", paddingBottom:8}}>
+        <div className="filter-scroll">
+          {CATEGORIES.map(c => (
+            <button key={c} style={{
+              ...S.pill,
+              background: selCat===c ? (CAT_COLORS[c]||"#3B82F6") : "#1e293b",
+              color: selCat===c ? "#fff" : "#94a3b8",
+            }} onClick={() => setSelCat(c)}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div style={S.pTrack}>
+        <div style={{...S.pFill, width:`${progress}%`}}/>
+      </div>
+
+      {/* Card */}
+      {cur ? (
+        <div className="card-area no-select" onClick={() => setFlipped(f=>!f)}>
+          <div className={`card${flipped?" flipped":""}`}>
+            <div className="face face-front">
+              <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
+              {cur.exam && <div style={S.examTag}>⚡ EXAM Q</div>}
+              <div style={S.question}>{cur.front}</div>
+              <div style={S.tapHint}>Tap to reveal answer</div>
+            </div>
+            <div className="face face-back">
+              <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
+              <div style={S.answer}>{cur.back}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={S.emptyState}>
+          <div style={{fontSize:48}}>🎉</div>
+          <div style={{color:"#fff",fontSize:18,fontWeight:700,marginTop:12}}>All Done!</div>
+          <div style={{color:"#94a3b8",fontSize:14,marginTop:6,fontFamily:"Arial,sans-serif"}}>You've reviewed all cards in this set</div>
+          <button style={{...S.mainBtn, marginTop:24}} onClick={() => { setIdx(0); setFlipped(false); }}>Restart</button>
+        </div>
+      )}
+
+      {/* Mark buttons — only when flipped */}
+      {flipped && cur && (
+        <div style={S.actionRow}>
+          <button style={S.noBtn} onClick={(e)=>{ e.stopPropagation(); mark("dontknow"); }}>
+            <span style={{fontSize:20}}>🔁</span>
+            <span style={{color:"#e2e8f0",fontSize:12,fontFamily:"Arial,sans-serif",fontWeight:600}}>Review Again</span>
+          </button>
+          <button style={S.yesBtn} onClick={(e)=>{ e.stopPropagation(); mark("know"); }}>
+            <span style={{fontSize:20}}>✅</span>
+            <span style={{color:"#e2e8f0",fontSize:12,fontFamily:"Arial,sans-serif",fontWeight:600}}>Got It!</span>
+          </button>
+        </div>
+      )}
+
+      {/* Nav row */}
+      <div style={S.navRow}>
+        <button style={{...S.navBtn, opacity: idx===0 ? 0.3:1}} onClick={() => go(-1)} disabled={idx===0}>‹ Prev</button>
+        <button style={S.shuffleBtn} onClick={() => setShuffled(s=>!s)}>
+          {shuffled ? "🔀 Shuffled" : "🔀 Shuffle"}
+        </button>
+        <button style={{...S.navBtn, opacity: idx>=deck.length-1 ? 0.3:1}} onClick={() => go(1)} disabled={idx>=deck.length-1}>Next ›</button>
+      </div>
+
+      {/* Status label */}
+      <div style={{minHeight:28, display:"flex", justifyContent:"center", alignItems:"center", marginBottom:8, paddingBottom:"env(safe-area-inset-bottom,12px)"}}>
+        {cur && known.has(cur.id) && <span style={{color:"#22C55E",fontSize:12,fontFamily:"Arial,sans-serif"}}>✅ Marked as known</span>}
+        {cur && unknown.has(cur.id) && <span style={{color:"#EF4444",fontSize:12,fontFamily:"Arial,sans-serif"}}>🔁 Needs review</span>}
+        {cur && !known.has(cur.id) && !unknown.has(cur.id) && <span style={{color:"#475569",fontSize:12,fontFamily:"Arial,sans-serif"}}>Swipe left/right or use buttons</span>}
+      </div>
+    </div>
+  );
+}
+
+function Pill({ num, lbl }) {
+  return (
+    <div style={{ background:"#1e293b", borderRadius:12, padding:"8px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+      <span style={{color:"#a5b4fc",fontSize:20,fontWeight:700}}>{num}</span>
+      <span style={{color:"#64748b",fontSize:11,fontFamily:"Arial,sans-serif"}}>{lbl}</span>
+    </div>
+  );
+}
+
+const S = {
+  page: {
+    minHeight: "100dvh",
+    minHeight: "-webkit-fill-available",
+    background: "#0A0F1E",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    maxWidth: 430,
+    margin: "0 auto",
+    overflowX: "hidden",
+    paddingTop: "env(safe-area-inset-top, 0px)",
+  },
+  homeWrap: {
+    width: "100%",
+    padding: "20px 20px 40px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: "calc(40px + env(safe-area-inset-bottom, 0px))",
+  },
+  header: {
+    width: "100%",
+    background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
+    borderRadius: 20,
+    padding: "24px 20px 20px",
+    textAlign: "center",
+    border: "1px solid #312e81",
+    marginBottom: 20,
+  },
+  badge: {
+    background: "#312e81",
+    color: "#a5b4fc",
+    fontSize: 10,
+    fontFamily: "Arial, sans-serif",
+    letterSpacing: 2,
+    padding: "4px 12px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 10,
+  },
+  title: { color:"#fff", fontSize:26, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
+  subtitle: { color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", marginBottom:18 },
+  statsRow: { display:"flex", gap:10, justifyContent:"center" },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+    width: "100%",
+    marginBottom: 14,
+  },
+  catCard: {
+    background: "#0f172a",
+    border: "1.5px solid",
+    borderRadius: 14,
+    padding: "14px 12px",
+    textAlign: "left",
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    WebkitAppearance: "none",
+  },
+  catDot: { width:8, height:8, borderRadius:"50%", marginBottom:4 },
+  catName: { color:"#e2e8f0", fontSize:13, fontWeight:600, fontFamily:"Arial,sans-serif" },
+  catCnt: { color:"#64748b", fontSize:12, fontFamily:"Arial,sans-serif" },
+  mainBtn: {
+    width: "100%",
+    background: "linear-gradient(135deg, #6366f1, #8B5CF6)",
+    color: "#fff",
+    border: "none",
+    borderRadius: 14,
+    padding: "15px",
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: "Arial, sans-serif",
+    cursor: "pointer",
+    letterSpacing: 0.5,
+    marginTop: 8,
+    WebkitAppearance: "none",
+  },
+  outlineBtn: {
+    background: "transparent",
+    border: "1.5px solid #8B5CF6",
+    color: "#a78bfa",
+  },
+  statsBtn: {
+    background: "transparent",
+    border: "1.5px solid #475569",
+    color: "#94a3b8",
+  },
+  backBtn: {
+    color: "#94a3b8",
+    background: "none",
+    border: "none",
+    fontSize: 15,
+    cursor: "pointer",
+    alignSelf: "flex-start",
+    fontFamily: "Arial,sans-serif",
+    padding: "8px 0",
+    marginBottom: 8,
+  },
+  statsDetail: { display:"flex", gap:12, marginTop:8, marginBottom:14, width:"100%" },
+  statBlock: { flex:1, background:"#0f172a", borderRadius:16, padding:"16px 10px", textAlign:"center" },
+  bigNum: { fontSize:32, fontWeight:700 },
+  bigLbl: { color:"#94a3b8", fontSize:12, fontFamily:"Arial,sans-serif", marginTop:4 },
+  pBarWrap: { width:"100%", height:8, background:"#1e293b", borderRadius:4, overflow:"hidden" },
+  topBar: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 20px 8px",
+    background: "#0A0F1E",
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+    flexShrink: 0,
+  },
+  iconBtn: {
+    background: "#1e293b",
+    border: "none",
+    borderRadius: 10,
+    width: 38,
+    height: 38,
+    fontSize: 18,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    WebkitAppearance: "none",
+  },
+  diffBadge: {
+    fontSize: 10,
+    color: "#000",
+    padding: "2px 8px",
+    borderRadius: 10,
+    fontWeight: 700,
+    fontFamily: "Arial,sans-serif",
+  },
+  pill: {
+    border: "none",
+    borderRadius: 20,
+    padding: "6px 14px",
+    fontSize: 12,
+    fontFamily: "Arial, sans-serif",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    fontWeight: 600,
+    flexShrink: 0,
+    WebkitAppearance: "none",
+  },
+  pTrack: {
+    width: "calc(100% - 40px)",
+    height: 3,
+    background: "#1e293b",
+    borderRadius: 2,
+    overflow: "hidden",
+    margin: "0 20px 14px",
+    flexShrink: 0,
+  },
+  pFill: {
+    height: "100%",
+    background: "linear-gradient(90deg, #6366f1, #8B5CF6)",
+    borderRadius: 2,
+    transition: "width 0.3s",
+  },
+  pBarFill: {
+    height: "100%",
+    borderRadius: 4,
+    transition: "width 0.4s",
+  },
+  catTag: {
+    fontSize: 11,
+    color: "#fff",
+    padding: "3px 10px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 12,
+    alignSelf: "flex-start",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 700,
+    letterSpacing: 0.5,
+    flexShrink: 0,
+  },
+  examTag: {
+    fontSize: 11,
+    color: "#fbbf24",
+    background: "#1c1200",
+    border: "1px solid #d97706",
+    padding: "3px 10px",
+    borderRadius: 20,
+    display: "inline-block",
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  question: {
+    color: "#e2e8f0",
+    fontSize: 16,
+    lineHeight: 1.6,
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    whiteSpace: "pre-line",
+    fontFamily: "Georgia, serif",
+  },
+  tapHint: {
+    color: "#475569",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 16,
+    fontFamily: "Arial, sans-serif",
+    flexShrink: 0,
+  },
+  answer: {
+    color: "#d1fae5",
+    fontSize: 13,
+    lineHeight: 1.8,
+    whiteSpace: "pre-line",
+    fontFamily: "'Courier New', monospace",
+    flex: 1,
+  },
+  actionRow: {
+    display: "flex",
+    gap: 12,
+    width: "calc(100% - 40px)",
+    margin: "10px 0 4px",
+    flexShrink: 0,
+  },
+  noBtn: {
+    flex: 1,
+    background: "#1c0a0a",
+    border: "1.5px solid #EF4444",
+    borderRadius: 14,
+    padding: "12px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+    cursor: "pointer",
+    WebkitAppearance: "none",
+  },
+  yesBtn: {
+    flex: 1,
+    background: "#0a1c0a",
+    border: "1.5px solid #22C55E",
+    borderRadius: 14,
+    padding: "12px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+    cursor: "pointer",
+    WebkitAppearance: "none",
+  },
+  navRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "calc(100% - 40px)",
+    margin: "8px 0 4px",
+    gap: 8,
+    flexShrink: 0,
+  },
+  navBtn: {
+    background: "#1e293b",
+    color: "#94a3b8",
+    border: "none",
+    borderRadius: 10,
+    padding: "10px 16px",
+    fontSize: 14,
+    cursor: "pointer",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 600,
+    WebkitAppearance: "none",
+  },
+  shuffleBtn: {
+    background: "#1e293b",
+    color: "#a5b4fc",
+    border: "1px solid #312e81",
+    borderRadius: 10,
+    padding: "10px 14px",
+    fontSize: 12,
+    cursor: "pointer",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 600,
+    flex: 1,
+    WebkitAppearance: "none",
+  },
+  emptyState: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 20px",
+    width: "100%",
+  },
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
