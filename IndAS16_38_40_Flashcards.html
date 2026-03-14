@@ -638,13 +638,19 @@ function App() {
       {cur ? (
         <div className="card-area no-select" onClick={() => setFlipped(f=>!f)}>
           <div className={`card${flipped?" flipped":""}`}>
-            <div className="face face-front">
+            <div className="face face-front"
+              onTouchStart={e => e.stopPropagation()}
+              onTouchMove={e => e.stopPropagation()}
+              onTouchEnd={e => e.stopPropagation()}>
               <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
               {cur.exam && <div style={S.examTag}>⚡ EXAM Q</div>}
               <div style={S.question}>{cur.front}</div>
               <div style={S.tapHint}>Tap to reveal answer</div>
             </div>
-            <div className="face face-back">
+            <div className="face face-back"
+              onTouchStart={e => e.stopPropagation()}
+              onTouchMove={e => e.stopPropagation()}
+              onTouchEnd={e => e.stopPropagation()}>
               <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
               <div style={S.answer}>{cur.back}</div>
             </div>
