@@ -38,7 +38,7 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       border-radius: 20px;
-      padding: 16px 20px 48px 20px;
+      padding: 16px 20px;
       display: flex;
       flex-direction: column;
       border: 1px solid;
@@ -656,12 +656,10 @@ function App() {
               <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
               {cur.exam && <div style={S.examTag}>⚡ EXAM Q</div>}
               <div style={S.question}>{cur.front}</div>
-              <button className="flip-btn" onClick={() => setFlipped(true)}>TAP TO REVEAL ANSWER ↓</button>
             </div>
             <div className="face face-back">
               <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>{cur.category}</div>
               <div style={S.answer}>{cur.back}</div>
-              <button className="flip-btn" onClick={() => { setFlipped(false); }} style={{color:"#6366f1"}}>↑ BACK TO QUESTION</button>
             </div>
           </div>
         </div>
@@ -694,6 +692,23 @@ function App() {
         </button>
         <button style={{...S.navBtn, opacity: idx>=deck.length-1 ? 0.3:1}} onClick={() => go(1)} disabled={idx>=deck.length-1}>Next ›</button>
       </div>
+
+      {cur && (
+        <div style={{padding:"0 20px", marginTop:6}}>
+          <button
+            onClick={() => setFlipped(f=>!f)}
+            style={{
+              width:"100%", padding:"12px", borderRadius:12,
+              border: flipped ? "1px solid #4f46e5" : "1px solid #312e81",
+              background: flipped ? "rgba(99,102,241,0.15)" : "rgba(99,102,241,0.08)",
+              color: flipped ? "#a5b4fc" : "#818cf8",
+              fontSize:13, fontFamily:"Arial,sans-serif", fontWeight:700,
+              letterSpacing:"0.5px", cursor:"pointer",
+            }}>
+            {flipped ? "↑ BACK TO QUESTION" : "TAP TO REVEAL ANSWER ↓"}
+          </button>
+        </div>
+      )}
 
       <div style={{minHeight:28, display:"flex", justifyContent:"center", alignItems:"center", marginBottom:8, paddingBottom:"env(safe-area-inset-bottom,12px)"}}>
         {cur && known.has(cur.id) && <span style={{color:"#22C55E",fontSize:12,fontFamily:"Arial,sans-serif"}}>✅ Marked as known</span>}
