@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>FR · Ind AS 2, 36 &amp; 105</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    body {
+      background: #0A0F1E;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #root { height: 100%; }
+    ::-webkit-scrollbar { display: none; }
+    .card-area {
+      width: calc(100% - 40px);
+      margin: 0 20px;
+      height: 390px;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .card { width: 100%; height: 100%; position: relative; border-radius: 20px; }
+    .card.flipped .face-front { opacity: 0; pointer-events: none; }
+    .card.flipped .face-back  { opacity: 1; pointer-events: auto; }
+    .face {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      transition: opacity 0.3s ease;
+    }
+    .face-front {
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      border-color: #312e81;
+      opacity: 1; pointer-events: auto; z-index: 2;
+    }
+    .face-back {
+      background: linear-gradient(145deg, #0f1929 0%, #0c1a0f 100%);
+      border-color: #14532d;
+      opacity: 0; pointer-events: none; z-index: 1;
+    }
+    .filter-scroll {
+      display: flex; gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 20px;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+    .no-select { -webkit-user-select: none; user-select: none; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const STORAGE_KEY = 'indas_progress_v1';
+
+function loadProgress() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : { known: [], unknown: [] }; }
+  catch(e) { return { known: [], unknown: [] }; }
+}
+function saveProgress(known, unknown) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ known: [...known], unknown: [...unknown] })); } catch(e) {}
+}
+
+const cards = [
+  // ══════════════════════════════════════════════════════
+  // IND AS 2 – INVENTORIES
+  // ══════════════════════════════════════════════════════
+  { id:1, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Objective & Scope\n\nWhat is the objective of Ind AS 2?\nWhich inventories are EXCLUDED from its scope?",
+    back:"Objective: Prescribe accounting treatment for inventories — how to determine cost, recognise it as an expense (including write-down to NRV), and which cost formula to apply.\n\nExcludes from scope entirely:\n(a) Financial instruments (Ind AS 32 & 109)\n(b) Biological assets related to agricultural activity (Ind AS 41)\n\nExcludes from MEASUREMENT only:\n(a) Producers of agricultural & forest products, minerals — measured at NRV per industry practice\n(b) Commodity broker-traders — measured at FV less costs to sell\n\nChanges in NRV / FV less costs to sell → recognised in P&L in the period of change." },
+
+  { id:2, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Key Definitions\n\nDefine: Inventories | Net Realisable Value | Fair Value\n\nState the key difference between NRV and Fair Value.",
+    back:"Inventories: Assets held for SALE in ordinary course of business (finished goods); in process of production for such sale (WIP); or materials/supplies to be CONSUMED in production or rendering of services.\n\nNRV: Estimated selling price in ordinary course of business LESS estimated costs of completion LESS estimated costs to make the sale.\n→ Entity-specific value.\n\nFair Value: Price received to sell an asset in an orderly transaction between market participants at measurement date (Ind AS 113).\n→ Market-based measurement.\n\nKey difference:\n• NRV = what THIS entity expects to realise\n• FV = what market participants would pay\n• NRV for inventories may NOT equal Fair Value less costs to sell\n\nExample: Market FV = ₹10, order in hand @ ₹11, incremental cost = ₹0.50 → FV = ₹10, NRV = ₹10.50" },
+
+  { id:3, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Measurement Principle\n\nAt what value are inventories measured?\nState the 3 components that make up the COST of inventories.",
+    back:"Measurement: Inventories shall be measured at the LOWER OF COST and NET REALISABLE VALUE.\n\nCost of Inventories comprises:\n\n1. Costs of Purchase\n   • Purchase price + import duties + non-recoverable taxes + transport & handling\n   • Less: trade discounts, rebates and similar items\n   (Settlement/cash discounts → NOT deducted from cost)\n\n2. Costs of Conversion\n   • Direct materials, direct labour, other direct costs\n   • Systematic allocation of fixed & variable production overheads\n\n3. Other Costs\n   • Only if incurred in bringing inventories to present location & condition\n   • Borrowing costs → only if qualifies as qualifying asset under Ind AS 23\n   • Deferred payment → financing element recognised as interest expense, NOT added to inventory" },
+
+  { id:4, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – Fixed Production Overheads\n\nHow are FIXED production overheads allocated?\nWhat happens when actual production is BELOW normal capacity? ABOVE?",
+    back:"Fixed O/H: Relatively constant regardless of production volume (e.g., factory depreciation, factory management).\n\nAllocation basis: NORMAL CAPACITY\n• Normal capacity = average production expected over several periods under normal circumstances (accounting for planned maintenance)\n\nIf AP = NC:\n→ Allocated fixed O/H = Total fixed O/H → ₹0 unallocated\n\nIf AP < NC (abnormally low):\n→ Rate = Total FO/H ÷ NC (maintained)\n→ Allocated to inventory = AP × rate\n→ UNALLOCATED O/H → expensed to P&L immediately\n\nIf AP > NC (abnormally high):\n→ Rate = Total FO/H ÷ AP (reduced)\n→ All O/H absorbed → ₹0 expensed separately\n→ Inventory per unit reduced so inventory ≤ cost\n\nVariable O/H: Allocated on basis of ACTUAL USE of production facilities.\n\n📌 NEVER over-absorb fixed overheads into inventory." },
+
+  { id:5, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:false,
+    front:"Ind AS 2 – Costs EXCLUDED from Inventory\n\nList the costs that must be EXCLUDED from inventory cost and expensed in the period incurred.",
+    back:"Must NEVER be included in inventory cost:\n\n(a) Abnormal amounts of wasted materials, labour or other production costs\n\n(b) Storage costs — UNLESS necessary in the production process BEFORE a further production stage\n   ✅ Ageing of whiskey in cask (essential to product)\n   ❌ Warehouse storage of finished goods\n\n(c) Administrative overheads NOT contributing to bringing inventories to present location & condition\n\n(d) Selling costs\n   Including: sales commission, distribution costs, after-sale warranty, advertising\n\n(e) Financing element in deferred payment (→ interest expense)\n\n📌 Common exam traps:\n✅ Import duties, freight, brokerage to indenting agents, insurance on purchases → INCLUDED\n❌ Accounts dept salaries, sales commission, warranty costs → P&L expense" },
+
+  { id:6, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 2 – Joint Products & By-Products\n\nHow is cost allocated when a process produces joint products?\nHow are by-products treated?",
+    back:"Joint Products:\n\nIf conversion costs are SEPARATELY identifiable:\n→ Each product bears its own separately identified cost\n\nIf costs are NOT separately identifiable:\n→ Allocate on RATIONAL & CONSISTENT basis:\n   • Relative sales value at split-off point, OR\n   • Relative sales value at completion of production\n\nBy-Products:\n\nImmaterial by-product:\n→ Measured at NRV\n→ NRV deducted from COST OF MAIN PRODUCT\n→ Carrying amount of main product = not materially different from its cost\n\nMaterial by-product:\n→ Treated as a JOINT PRODUCT\n→ Costs allocated on rational & consistent basis\n\nScrap/waste:\n→ Usually immaterial → measured at NRV → deducted from joint cost\n\n📌 By-product NRV always reduces cost of main product first." },
+
+  { id:7, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Cost Formulas\n\nWhat are the permitted cost formulas?\nWhich is NOT permitted? Why?\nState the consistency rule.",
+    back:"Permitted formulas:\n\n1. FIFO (First-In, First-Out):\n   Items purchased/produced first → sold first\n   Closing inventory = most recently purchased costs\n\n2. Weighted Average Cost:\n   Average cost of similar items at beginning + purchased during period\n   Computed periodically or after each receipt (moving average)\n   Formula: (Cost in store + Cost of new items) ÷ (Units in store + New units)\n\n3. Specific Identification:\n   Actual cost attributed to individually identified items\n   Used for: non-interchangeable items, goods for specific projects\n   Examples: Jewellery, tailor-made goods\n\nNOT Permitted: LIFO\n→ Inventory values may bear little relationship to recent cost levels\n\nConsistency rule:\n→ SAME formula for all inventories of SIMILAR nature and use\n→ DIFFERENT nature or use → may justify different formula\n→ Different geographic location ALONE → does NOT justify different formula" },
+
+  { id:8, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Cost Measurement Techniques\n\nName and describe the two TECHNIQUES allowed for measuring cost of inventories.",
+    back:"Two approximation techniques are permitted if results approximate actual cost:\n\n1. Standard Cost Method:\n   • Cost based on NORMAL levels of materials & supplies, labour efficiency, capacity utilisation\n   • Standards regularly reviewed and revised\n   • Used for manufacturing companies with reliable data\n\n2. Retail Method:\n   • Used in retail industry for large numbers of rapidly changing items with similar margins\n   • Cost = Sales value of inventory LESS appropriate gross margin %\n   • % takes into account inventory marked down below original selling price\n   • An average % for each retail department often used\n\n📌 Key difference:\n• Techniques = approximation methods to arrive at cost\n• Cost formulas (FIFO/WA) = how to assign actual costs to specific units" },
+
+  { id:9, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – Service Provider Inventories\n\nHow does Ind AS 2 apply to inventories of SERVICE PROVIDERS?\nWhat costs are included vs excluded?",
+    back:"Service provider inventories = described as WORK IN PROGRESS.\n\nCost includes:\n✅ Labour and other costs of PERSONNEL DIRECTLY engaged in providing the service (including supervisory)\n✅ ATTRIBUTABLE OVERHEADS\n\nCost excludes:\n❌ Labour relating to SALES and GENERAL ADMINISTRATIVE personnel\n❌ Profit margins\n\nRecognition:\n→ WIP accumulates only for INCOMPLETE services\n→ Once service is complete / revenue recognised → recognised as COST OF SERVICES (expense)\n\nBalance sheet:\n→ Described as 'Work in Progress'\n\nExample:\nConsulting firm accumulates staff costs + directly attributable overheads for an incomplete engagement as WIP → expensed when engagement completes and revenue is recognised." },
+
+  { id:10, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – Agricultural Produce & Deferred Payment\n\nHow is agricultural produce initially measured at harvest?\n\nAlso: How is a FINANCING ELEMENT in deferred payment treated?",
+    back:"Agricultural produce (Ind AS 41 interface):\n\n→ Harvested produce measured at FAIR VALUE LESS COSTS TO SELL at point of harvest\n→ This FV less costs to sell = DEEMED COST for Ind AS 2 purposes\n→ From harvest date: normal Ind AS 2 rules apply (lower of deemed cost and NRV)\n\nExamples: Cotton, grapes, timber — all measured at FV less CTS at harvest, then Ind AS 2 applies thereafter.\n\nDeferred Payment (financing element):\n\nWhen arrangement contains a financing element:\n→ Inventory recorded at the CASH PRICE EQUIVALENT\n→ Difference between deferred price and cash price = INTEREST EXPENSE over financing period\n\nExample:\n• Deferred price: ₹3,00,000 (₹25,000/month × 12)\n• Cash price: ₹2,80,000\n• Financing element: ₹20,000 → interest expense\n• Inventory cost: ₹2,80,000\n\nBorrowing costs (Ind AS 23):\n→ Included ONLY if inventory is a qualifying asset (substantial period to get ready)\n→ Large quantities on REPETITIVE basis → NOT qualifying assets" },
+
+  { id:11, standard:"Ind AS 2", category:"Theory Q&A", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – NRV: Firm Sales Contracts\n\nAn entity holds 100 units. Firm contract to sell 60 units @ ₹11/unit (incremental selling cost ₹1/unit). Market price for remaining 40 units = ₹8/unit (incremental cost ₹1/unit). Cost = ₹10/unit.\n\nCalculate NRV and inventory value for each group.",
+    back:"Rule: NRV estimates take into account the PURPOSE for which inventory is held.\n\n→ Inventory under FIRM SALES CONTRACTS → NRV based on CONTRACT PRICE\n→ EXCESS inventory → NRV based on GENERAL SELLING PRICES\n\nApplication:\n\n60 units (under firm contract):\n→ NRV = ₹11 − ₹1 = ₹10/unit\n→ Cost = ₹10/unit → Lower of cost/NRV = ₹10 → No write-down\n→ Inventory value = 60 × ₹10 = ₹600\n\n40 units (excess — no firm contract):\n→ NRV = ₹8 − ₹1 = ₹7/unit\n→ Cost = ₹10/unit → NRV < Cost → Write-down to ₹7\n→ Inventory value = 40 × ₹7 = ₹280\n\nTotal inventory = ₹600 + ₹280 = ₹880\nWrite-down recognised = 40 × ₹3 = ₹120\n\n📌 If firm contracts are for MORE than inventory held → consider Ind AS 37 onerous contract provisions for the shortfall." },
+
+  { id:12, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – NRV: Writing Down Raw Materials\n\nAn entity holds raw materials. The selling price of FINISHED GOODS has fallen below cost. Should the raw materials be written down?\n\nWhat is the measure of NRV for raw materials?",
+    back:"General rule: Raw materials NOT written down below cost if finished goods are expected to be sold AT OR ABOVE COST.\n\nException – write-down applies:\nDecline in price of raw materials indicates cost of finished product will EXCEED its NRV → raw materials ARE written down to NRV.\n\nMeasure of NRV for raw materials:\n→ REPLACEMENT COST is the best available measure of NRV\n(Cannot determine a selling price for raw materials in isolation when they feed into multiple products)\n\nImportant:\n→ No write-down just because anticipated profit will be LESS THAN NORMAL\n→ Write-down only if finished goods expected to be sold AT A LOSS\n\nDiagram:\n• Finished goods sold at or above cost → Raw materials at COST\n• Finished goods sold below cost (at NRV) → Raw materials at REPLACEMENT COST (= NRV proxy)" },
+
+  { id:13, standard:"Ind AS 2", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 2 – NRV Write-Down Reversal\n\nWhen is a previous write-down REVERSED?\nWhat is the ceiling for reversal?",
+    back:"Reversal trigger:\nNew assessment of NRV in each subsequent period shows circumstances previously causing write-down NO LONGER EXIST, or there is clear evidence of INCREASE in NRV.\n\nReversal amount:\n→ Limited to the amount of the ORIGINAL WRITE-DOWN\n→ New carrying amount = LOWER of (original cost) and (revised NRV)\n\nRecognition:\n→ Recognised as a REDUCTION in inventory expense in the period of reversal\n\nExample:\n→ Item written down from ₹50 (cost) to ₹25 (NRV)\n→ Next year NRV rises to ₹60\n→ Reversal = ₹25 (restoring to cost of ₹50, NOT to ₹60)\n→ New carrying amount = ₹50 (original cost)\n\n📌 Write-down done item by item. Reversal also item by item.\n📌 Passage of time alone (without changed circumstances) → NOT sufficient." },
+
+  { id:14, standard:"Ind AS 2", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Recognition as Expense & Disclosure\n\nHow is inventory carrying amount recognised as expense?\nList the 5 key DISCLOSURE requirements.",
+    back:"Recognition as Expense:\n→ Carrying amount of inventories sold → recognised in period related REVENUE is recognised\n→ Write-downs to NRV + losses → expense in period incurred\n→ Reversals → reduce inventory expense in period of reversal\n\nNote: Inventory used in self-constructed PPE → capitalised, then depreciated over useful life of PPE.\n\n5 Key Disclosures:\n1. Accounting policies (including COST FORMULA used)\n2. Total carrying amount + carrying amount by classification (merchandise, production supplies, materials, WIP, finished goods)\n3. Carrying amount of inventories carried at FV less costs to sell\n4. Amount recognised as expense; write-down amounts; reversal amounts + circumstances\n5. Carrying amount of inventories PLEDGED AS SECURITY for liabilities" },
+
+  { id:15, standard:"Ind AS 2", category:"Theory Q&A", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Practical: Cost of Purchase\n\nA company buys 1,000 units. Quoted price ₹1,200/unit; trade discount 5%; settlement discount 2% (intends to take); import duty ₹60/unit; delivery ₹5,000.\n\nCalculate cost of inventory. Which discount is deducted?",
+    back:"Cost of inventory calculation:\n\nPurchase price: 1,000 × ₹1,200 × 95% = ₹11,40,000\nImport duties: 1,000 × ₹60         = ₹60,000\nDelivery cost                       = ₹5,000\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nCost of inventory                   = ₹12,05,000\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCost per unit = ₹12,05,000 ÷ 1,000 = ₹1,205/unit\n\n📌 KEY RULES:\n→ TRADE DISCOUNT (5%) → DEDUCTED ✅ (reduces purchase price)\n→ SETTLEMENT/CASH DISCOUNT (2%) → NOT DEDUCTED ❌\n   Even though entity intends to take it, cash discounts are NOT deducted from inventory cost. They represent a financial decision, not a trade price reduction.\n→ Import duties → INCLUDED ✅\n→ Delivery/freight → INCLUDED ✅\n\n📌 Exam trap: Only TRADE discounts reduce cost. Settlement discounts do not." },
+
+  { id:16, standard:"Ind AS 2", category:"Theory Q&A", difficulty:"Basic", exam:false,
+    front:"Ind AS 2 – Primary vs Secondary Packing & Variable Overheads\n\nDistinguish primary and secondary packing. Which is included in inventory cost?\n\nAlso: How are VARIABLE production overheads allocated?",
+    back:"Primary packing material:\n→ ESSENTIAL to bring inventory to SALEABLE CONDITION\n→ Without it, product cannot be sold (e.g., bottles/cans for food, sealed packets for medicines)\n→ INCLUDED in cost of inventories ✅\n\nSecondary packing material:\n→ Used for TRANSPORTING and FORWARDING after product is saleable (outer cartons, shipping crates)\n→ Nature of SELLING COST → EXCLUDED ❌\n→ Recognised as expense in P&L\n\nPublicity/marketing materials → EXCLUDED ❌ (selling costs)\n\nTest: Does the packing make the product SALEABLE? ✅ Or facilitate DELIVERY of an already-saleable product? ❌\n\nVariable production overheads:\n→ Vary directly (or nearly directly) with volume of production\n→ Examples: Indirect materials, indirect labour\n→ Allocation basis: ACTUAL USE of production facilities\n→ Always fully absorbed — no concept of under-absorption for variable overheads under Ind AS 2" },
+
+  { id:17, standard:"Ind AS 2", category:"Formula", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Formula Card: NRV & Weighted Average\n\n1. Write the NRV formula\n2. Write the inventory write-down formula\n3. Write the weighted average cost formula after a new purchase",
+    back:"1. Net Realisable Value:\nNRV = Estimated Selling Price − Estimated Costs of Completion − Estimated Costs to Make the Sale\n\n(Trade discounts expected → deducted from selling price)\n(Cash discounts for prompt payment → NOT deducted)\n\n2. Inventory Write-Down:\nWrite-down = Cost − NRV (only when NRV < Cost; applied item by item)\n\n3. New Weighted Average after purchase:\nNew WA = (Cost of units in store + Cost of new items received)\n         ÷ (Units in store + New units received)\n\nExample:\n• In store: 25 units @ ₹2.10 = ₹52.50\n• New receipt: 150 units @ ₹2.80 = ₹420.00\n• New WA = (₹52.50 + ₹420) ÷ (25 + 150) = ₹472.50 ÷ 175 = ₹2.70 per unit\n\n📌 Under moving average: new WA computed after each purchase. Sales at most recent WA." },
+
+  { id:18, standard:"Ind AS 2", category:"Formula", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – Formula Card: Fixed Overhead Absorption\n\nNormal capacity = 1,00,000 units. Total fixed O/H = ₹15,00,000.\n\nCase 1: Actual = 1,00,000\nCase 2: Actual = 75,000\nCase 3: Actual = 1,25,000\n\nFor each: (a) O/H per unit in inventory, (b) Amount expensed to P&L",
+    back:"Fixed O/H rate (based on NC) = ₹15,00,000 ÷ 1,00,000 = ₹15/unit\n\nCase 1: AP = NC = 1,00,000\n(a) ₹15 per unit\n(b) ₹0 expensed (fully absorbed)\n\nCase 2: AP = 75,000 < NC\n(a) ₹15 per unit (normal rate maintained)\n(b) Allocated = 75,000 × ₹15 = ₹11,25,000\n    Expensed to P&L = ₹15,00,000 − ₹11,25,000 = ₹3,75,000\n    (Unabsorbed overheads → P&L immediately)\n\nCase 3: AP = 1,25,000 > NC\n(a) ₹12 per unit (= ₹15,00,000 ÷ 1,25,000)\n    (Rate reduced so inventory not above cost)\n(b) All ₹15,00,000 absorbed → ₹0 expensed separately\n\n📌 Rule: Inventory per unit = ₹15 in Case 1 & 2. Reduced in Case 3. Unallocated O/H always → P&L." },
+
+  { id:19, standard:"Ind AS 2", category:"Quick Fire", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Quick Fire\n\n1. LIFO is ___ under Ind AS 2.\n2. NRV estimates take into account events ___ period end that confirm conditions ___ at period end.\n3. Write-down is done on ___ basis, NOT ___ basis.\n4. Storage costs included in inventory ONLY if ___.\n5. Settlement discounts ___ deducted from cost.",
+    back:"1. LIFO is NOT PERMITTED under Ind AS 2.\n\n2. NRV estimates take into account events AFTER period end that confirm conditions EXISTING at period end.\n\n3. Write-down is done on ITEM-BY-ITEM basis, NOT total inventory or classification basis.\n\n4. Storage costs included in inventory ONLY if necessary in the PRODUCTION PROCESS before a further production stage.\n\n5. Settlement discounts are NOT deducted from cost.\n   (Only TRADE discounts are deducted.)\n\nBonus:\n→ By-product NRV → deducted from MAIN PRODUCT cost\n→ Retail method: cost = sales value LESS appropriate gross margin %\n→ Same cost formula must be used for inventories of similar nature and use\n→ Agricultural produce at harvest = FV less costs to sell = DEEMED COST for Ind AS 2" },
+
+  { id:20, standard:"Ind AS 2", category:"Theory Q&A", difficulty:"Basic", exam:false,
+    front:"Ind AS 2 – AS 2 vs Ind AS 2: Key Differences\n\nState 4 significant differences between Ind AS 2 and old AS 2.",
+    back:"1. Subsequent Recognition:\n   Ind AS 2 → explicitly deals with subsequent recognition of carrying amount as expense\n   AS 2 → does NOT provide the same\n\n2. Commodity Broker-Traders:\n   Ind AS 2 → scopes out measurement of inventories held by commodity broker-traders (FV less costs to sell)\n   AS 2 → no such provision\n\n3. Definition of Fair Value & Distinction from NRV:\n   Ind AS 2 → defines FV; explains difference between NRV and FV\n   AS 2 → does not contain FV definition\n\n4. NRV Reversal:\n   Ind AS 2 → detailed guidance on subsequent NRV assessment + reversal (limited to original write-down)\n   AS 2 → does not deal with reversal\n\n5. Cost Formulas:\n   Ind AS 2 → requires consistent formula for inventories of similar nature and use\n   AS 2 → formula should 'reflect fairest possible approximation to cost incurred'\n\n6. LIFO:\n   Both Ind AS 2 and AS 2 → PROHIBIT LIFO" },
+
+  // ══════════════════════════════════════════════════════
+  // IND AS 36 – IMPAIRMENT OF ASSETS
+  // ══════════════════════════════════════════════════════
+  { id:21, standard:"Ind AS 36", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Objective & Scope\n\nWhat is the objective?\nList 6 asset types EXCLUDED from scope.",
+    back:"Objective: Ensure assets are carried at NO MORE than their RECOVERABLE AMOUNT. Prescribe when to recognise and reverse impairment losses.\n\nExcludes from scope:\n(a) Inventories (Ind AS 2)\n(b) Contract assets & costs to obtain/fulfill contracts (Ind AS 115)\n(c) Deferred tax assets (Ind AS 12)\n(d) Employee benefit assets (Ind AS 19)\n(e) Financial assets (Ind AS 109)\n(f) Non-current assets held for sale (Ind AS 105)\n(g) Biological assets at FV less costs to sell (Ind AS 41)\n(h) Insurance acquisition cash flows (Ind AS 117)\n\nApplies to:\n• PPE, intangible assets, investment property (cost model)\n• Investments in subsidiaries, associates, JVs (separate FS)\n• Goodwill from business combinations\n\nNote: All excluded assets are covered by other Ind AS with equivalent impairment provisions." },
+
+  { id:22, standard:"Ind AS 36", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Key Definitions\n\nDefine:\n• Impairment Loss\n• Recoverable Amount\n• Cash-Generating Unit (CGU)\n• Value in Use\n• Carrying Amount\n• Corporate Assets\n• Costs of Disposal",
+    back:"Impairment Loss: Amount by which CARRYING AMOUNT > RECOVERABLE AMOUNT\nFormula: IL = CA − RA\n\nRecoverable Amount: HIGHER of FVLCD and VIU\n(If either exceeds CA → asset not impaired)\n\nCGU: Smallest identifiable GROUP of assets generating cash inflows LARGELY INDEPENDENT of other assets/groups.\n\nValue in Use: PRESENT VALUE of future cash flows expected from an asset or CGU.\n\nCarrying Amount: Amount at which asset is recognised AFTER deducting accumulated depreciation and accumulated impairment losses.\n\nCorporate Assets: Assets OTHER than goodwill contributing to future cash flows of BOTH the CGU under review AND other CGUs. (e.g., head office, EDP equipment, research centre)\n\nCosts of Disposal: Incremental costs directly attributable to disposal, EXCLUDING finance costs & income tax." },
+
+  { id:23, standard:"Ind AS 36", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – When to Test for Impairment\n\nName the 3 assets requiring MANDATORY ANNUAL impairment test.\nFor all other assets: when must impairment be assessed?",
+    back:"3 Assets requiring MANDATORY ANNUAL test (regardless of indicators):\n1. Intangible assets with INDEFINITE useful life\n2. Intangible assets NOT YET AVAILABLE for use\n3. Goodwill acquired in a business combination\n\nKey rule for these 3:\n→ Test can be performed at any time during the year, but SAME TIME every year\n→ Different intangibles may be tested at different times\n→ If acquired in current period → must be tested before end of current annual period\n→ May roll forward previous calculation if: CGU unchanged + substantial headroom + remote likelihood of impairment\n\nFor ALL OTHER assets:\n→ Assess at END OF EACH REPORTING PERIOD for any INDICATION of impairment\n→ If indication exists → estimate recoverable amount\n→ No indication → no formal calculation needed\n\n📌 The 3 mandatory-annual assets need testing even if there are NO indicators of impairment." },
+
+  { id:24, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Indicators of Impairment\n\nList the EXTERNAL and INTERNAL sources of impairment indicators.",
+    back:"EXTERNAL sources (4):\n(a) Asset's market value has DECLINED SIGNIFICANTLY — more than expected from passage of time or normal use\n(b) Significant ADVERSE CHANGES in technological, market, economic, or legal environment\n(c) Market INTEREST RATES have INCREASED — likely to materially affect discount rate in VIU\n(d) Carrying amount of net assets > MARKET CAPITALISATION\n\nINTERNAL sources (3):\n(a) Evidence of OBSOLESCENCE or PHYSICAL DAMAGE\n(b) Significant adverse changes in EXTENT or MANNER of use (asset becoming idle, plans to discontinue/restructure, plans to dispose before expected date, reassessing useful life from indefinite to finite)\n(c) INTERNAL REPORTING data shows economic performance worse than expected (actual cash flows significantly worse than budgeted, operating losses, etc.)\n\nInvestment in subsidiary/associate/JV:\n(d) Dividend received > total comprehensive income of investee\n(e) Carrying amount in separate FS > carrying amounts in consolidated FS" },
+
+  { id:25, standard:"Ind AS 36", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Recoverable Amount & FVLCD\n\nWhat is Fair Value Less Costs of Disposal (FVLCD)?\nWhat costs are DEDUCTED vs NOT deducted?",
+    back:"FVLCD = Fair Value (per Ind AS 113) MINUS Costs of Disposal\n\nFair Value: Price received to sell asset in orderly transaction between market participants.\n\nCosts of disposal DEDUCTED:\n✅ Legal costs\n✅ Stamp duty and similar transaction taxes\n✅ Costs of removing the asset\n✅ Direct incremental costs to bring asset into condition for sale\n(Only if NOT already recognised as liabilities)\n\nNOT deducted:\n❌ Termination benefits (Ind AS 19)\n❌ Costs of reducing/reorganising business following disposal\n\nWhen only one needs to be calculated:\n→ If FVLCD > CA → not impaired → no need to calculate VIU\n→ If no reliable basis for FVLCD → use VIU alone\n\nFV vs VIU distinction:\n• FV → market participant assumptions (entity-neutral)\n• VIU → entity-specific synergies and legal rights" },
+
+  { id:26, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Value in Use (VIU)\n\nWhat is VIU? State the key rules for cash flow projections.\nWhat must be EXCLUDED from VIU cash flows?\nWhat is the discount rate requirement?",
+    back:"VIU: Present value of FUTURE CASH FLOWS expected from an asset or CGU.\n\nCash flow projection rules:\n(a) Based on reasonable & supportable assumptions; GREATER WEIGHT to external evidence\n(b) Based on most recent management-approved budgets/forecasts — max 5 YEARS (unless longer justified)\n(c) Beyond 5-year period → steady or DECLINING growth rate (not exceeding long-term industry/country average)\n\nCash flows INCLUDED:\n✅ Inflows from continuing use\n✅ Outflows necessarily incurred to generate those inflows\n✅ Net cash flows from disposal at end of useful life\n\nCash flows EXCLUDED:\n❌ Future restructurings NOT YET COMMITTED\n❌ Improving or ENHANCING asset's performance\n❌ Cash flows from FINANCING activities\n❌ INCOME TAX receipts or payments (pre-tax basis)\n\nDiscount rate:\n→ PRE-TAX rate reflecting current market assessments of time value of money + asset-specific risks\n→ Surrogates: entity's WACC or incremental borrowing rate (adjusted to pre-tax, asset-specific)" },
+
+  { id:27, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Recognition of Impairment Loss\n\nHow is impairment loss recognised for COST MODEL vs REVALUED ASSET?\nWhat happens to depreciation AFTER recognition?",
+    back:"When Recoverable Amount < Carrying Amount → recognise impairment loss.\n\nCost model asset:\n→ Impairment loss recognised IMMEDIATELY in Profit or Loss\n\nRevalued asset (Ind AS 16 or Ind AS 38):\n→ FIRST: offset against existing REVALUATION SURPLUS for that asset (in OCI)\n→ EXCESS over revaluation surplus → recognised in P&L\n\nPost-recognition depreciation:\n→ Depreciation charge ADJUSTED in future periods\n→ New depreciation = (Revised CA − Residual value) ÷ Remaining useful life\n\nOther points:\n→ Deferred tax recalculated comparing revised CA with tax base\n→ If impairment loss > CA → recognise a liability if required by another standard\n\nExample:\nRevised CA = ₹10,000; Residual = ₹500; Remaining life = 5 years\nNew annual dep = (₹10,000 − ₹500) ÷ 5 = ₹1,900" },
+
+  { id:28, standard:"Ind AS 36", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Cash-Generating Units (CGUs)\n\nWhat is a CGU? When is recoverable amount determined at CGU level?\nWhat does the carrying amount of a CGU include / exclude?",
+    back:"CGU: Smallest identifiable group of assets generating cash inflows LARGELY INDEPENDENT of cash inflows from other assets/groups.\n\nWhen to use CGU:\n→ Individual asset cannot generate cash inflows independently (e.g., machine only usable as part of production line)\n→ UNLESS: asset's FVLCD > CA, or VIU ≈ FVLCD\n\nCarrying amount of CGU INCLUDES:\n✅ Assets directly attributed or allocated on reasonable & consistent basis\n✅ Assets generating the future cash inflows used in CGU's VIU calculation\n\nCarrying amount of CGU EXCLUDES:\n❌ Recognised liabilities (UNLESS recoverable amount cannot be determined without considering them)\n❌ Goodwill and corporate assets → tested separately with special rules\n\nIdentifying CGUs:\n→ Consistent with how management monitors operations\n→ Can be as small as one asset or as large as a reportable segment\n\n📌 A bus route = one CGU (even though individual buses do not generate independent cash inflows)." },
+
+  { id:29, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Goodwill Impairment Testing\n\nHow is goodwill ALLOCATED to CGUs?\nState the ORDER of testing when CGU assets and goodwill tested simultaneously.\nHow is impairment loss allocated within a CGU?",
+    back:"Goodwill allocation:\n→ To CGUs/groups of CGUs EXPECTED TO BENEFIT from synergies of the combination\n→ Lowest level at which management monitors goodwill; not larger than an operating segment\n→ Pro-rata method: Goodwill to CGU = (Purchase consideration allocated to CGU ÷ Total purchase consideration) × Total goodwill\n\nOrder of testing (bottom-up):\n1. FIRST test individual assets within CGU → recognise any impairment losses\n2. THEN test the CGU including goodwill → recognise impairment at CGU level\n\nImpairment loss allocation order:\n(a) FIRST → reduce carrying amount of GOODWILL to zero\n(b) THEN → reduce other assets PRO RATA based on carrying amounts\n\nFloor per individual asset:\nCA cannot be reduced below HIGHEST of:\n→ FVLCD (if determinable)\n→ VIU (if determinable)\n→ ZERO\n\nExcess over floor → reallocated pro rata to other assets in CGU.\n\n📌 CRITICAL: Goodwill impairment CANNOT BE REVERSED." },
+
+  { id:30, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 36 – Corporate Assets & NCI Goodwill\n\nHow are corporate assets tested for impairment?\n\nExplain the NCI goodwill 'GROSSING UP' concept.",
+    back:"Corporate assets: OTHER than goodwill; contribute to cash flows of BOTH CGU under review AND other CGUs.\n\nScenario A — CA can be allocated to CGU on reasonable & consistent basis:\n→ Include portion in CGU's carrying amount → test enlarged CGU against RA\n\nScenario B — CA CANNOT be allocated:\n→ Step 1: Test individual CGU without corporate asset\n→ Step 2: Identify SMALLEST GROUP of CGUs to which CA can be allocated\n→ Step 3: Test that group (including CA) against group's RA\n\nNCI Goodwill Grossing Up (partial goodwill method):\n→ Under Ind AS 103, if NCI measured at proportionate share, only PARENT'S goodwill recognised\n→ CGU carrying amount = net assets (parent + NCI) + parent's goodwill only\n→ But recoverable amount reflects FULL economic entity\n→ Solution: GROSS UP goodwill = Recognised goodwill ÷ Parent's % × NCI %\n→ Compare grossed-up CA with RA\n→ If impaired: total IL calculated on grossed-up basis\n→ Only impairment on PARENT'S share recognised in CFS\n→ NCI portion of unrecognised goodwill impairment → NOT recognised" },
+
+  { id:31, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Reversal of Impairment Loss\n\nWhen can an impairment loss be reversed?\nState rules for: (a) Individual asset, (b) CGU, (c) Goodwill.",
+    back:"General condition: Change in ESTIMATES used to determine recoverable amount.\n⚠️ Passage of time alone → NOT sufficient.\n\n(a) Individual asset reversal:\n→ Increased CA shall NOT exceed CA had NO impairment been recognised (net of dep/amortisation)\n→ Cost model → recognised in P&L\n→ Revalued model → recognised in OCI (reversal of prior OCI charge) or P&L (if prior impairment was in P&L)\n→ After reversal: adjust depreciation going forward\n\n(b) CGU reversal:\n→ Allocate reversal PRO RATA to assets (EXCEPT goodwill) based on carrying amounts\n→ Each asset's CA not increased above LOWER of:\n   (i) its RA\n   (ii) CA had no impairment been recognised (net of dep)\n→ Excess → reallocated pro rata to remaining assets\n\n(c) Goodwill:\n→ IMPAIRMENT LOSS ON GOODWILL CANNOT BE REVERSED — EVER.\n\n📌 Reversal ceiling = CA that would have existed (net of dep) HAD NO IMPAIRMENT been recognised." },
+
+  { id:32, standard:"Ind AS 36", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 36 – Goodwill on Partial Disposal & Rolling Forward\n\nHow is goodwill derecognised when PART of a CGU is disposed?\n\nWhen can previous period's recoverable amount be ROLLED FORWARD?",
+    back:"Goodwill on partial disposal:\n→ Goodwill associated with disposed operation → included in carrying amount of disposed operation\n→ Measured on basis of RELATIVE VALUES of:\n   (i) Operation disposed of, and\n   (ii) Portion of CGU retained\n→ Unless entity can demonstrate another method better reflects associated goodwill\n\nExample: Entity sells operation for ₹100; RA of retained portion = ₹300.\nTotal value = ₹400. Goodwill on disposed = 100/400 = 25% of total goodwill.\n\nRolling Forward (previous calculation reused):\nPermitted only if ALL 3 criteria met:\n(a) UNCHANGED CGU: assets/liabilities have not changed significantly since last calculation\n(b) SUBSTANTIAL HEADROOM: last RA exceeded CA by substantial margin\n(c) REMOTE LIKELIHOOD: likelihood that current RA < CA is remote\n\n📌 If any of the 3 criteria is NOT met → fresh calculation required.\n📌 This provision reduces cost of annual goodwill impairment testing." },
+
+  { id:33, standard:"Ind AS 36", category:"Quick Fire", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Quick Fire\n\n1. Recoverable amount = ___\n2. VIU discount rate must be a ___ rate\n3. VIU cash flow projections: max period = ___\n4. Impairment allocated to goodwill: ___ (first/last?)\n5. Goodwill impairment: reversible? ___\n6. Three assets tested annually: ___",
+    back:"1. Recoverable amount = HIGHER of (FVLCD) and (Value in Use)\n\n2. VIU discount rate = PRE-TAX rate (time value + asset-specific risks)\n\n3. VIU cash flow projections: max 5 YEARS (unless longer justified by track record)\n\n4. Impairment allocated to goodwill: FIRST (before other assets in CGU)\n\n5. Goodwill impairment: NO — NEVER reversible\n\n6. Three assets tested annually:\n   • Intangible with INDEFINITE useful life\n   • Intangible NOT YET AVAILABLE for use\n   • Goodwill from business combination\n\nBonus:\n→ Partial goodwill (NCI at proportionate share) → GROSS UP for impairment test\n→ Only parent's share of goodwill impairment recognised in CFS\n→ Corporate assets tested in context of CGU or group of CGUs (never in isolation)" },
+
+  { id:34, standard:"Ind AS 36", category:"Formula", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Formula Card\n\n1. Impairment Loss formula\n2. Revised Depreciation after Impairment\n3. Reversal ceiling formula\n\nWith a worked example for reversal ceiling.",
+    back:"1. Impairment Loss:\nIL = Carrying Amount − Recoverable Amount\n(Recognise only when CA > RA)\n\n2. Recoverable Amount:\nRA = MAX (Fair Value Less Costs of Disposal, Value in Use)\n\n3. Revised Depreciation after Impairment:\nNew Dep = (Revised CA − Residual Value) ÷ Remaining Useful Life\n\nExample: Revised CA = ₹10,000; Residual = ₹500; Remaining life = 5 yrs\nNew Dep = (10,000 − 500) ÷ 5 = ₹1,900 per annum\n\n4. Reversal Ceiling:\nMax CA after reversal =\nHistorical Cost − Accumulated dep AS IF no impairment had ever been recognised\n\nExample:\nCost = ₹3,20,000 | Life = 20 years | Impairment at Year 4\nCA had no impairment = ₹3,20,000 − (₹3,20,000/20 × 4) = ₹3,20,000 − ₹64,000 = ₹2,56,000\n→ Reversal cannot increase CA above ₹2,56,000" },
+
+  { id:35, standard:"Ind AS 36", category:"Theory Q&A", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 36 – Disclosure Requirements\n\nWhat must be disclosed when an impairment loss or reversal has been recognised?",
+    back:"For each material impairment loss or reversal:\n1. Events and circumstances leading to recognition\n2. Amount of IL or reversal\n3. Class of asset or description of CGU and segment\n4. Whether RA = FVLCD or VIU\n5. If FVLCD → valuation technique and key assumptions\n6. If VIU → discount rate(s) used in current and prior estimate\n\nFor CGUs with significant goodwill or indefinite-life intangibles:\n7. Carrying amount of goodwill allocated to the CGU\n8. Carrying amount of indefinite-life intangibles allocated\n9. Basis of RA determination (VIU or FVLCD)\n10. Key assumptions in cash flow projections\n11. Management's approach to each key assumption\n12. Period over which CFs projected and justification if > 5 years\n13. Growth rate used beyond budget period + justification\n14. Discount rate(s) applied\n15. Sensitivity — if reasonably possible change would cause impairment\n\nAggregate disclosures required even if no individual impairment is material." },
+
+  // ══════════════════════════════════════════════════════
+  // IND AS 105 – HELD FOR SALE & DISCONTINUED OPS
+  // ══════════════════════════════════════════════════════
+  { id:36, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Objective & Scope\n\nWhat are the 2 core objectives?\nWhich assets are scoped OUT of MEASUREMENT provisions?",
+    back:"Two core objectives:\n1. Accounting for non-current assets (or disposal groups) HELD FOR SALE\n   → Measurement: lower of CA and FVLCTS\n   → Presentation: separately in balance sheet as CURRENT asset\n\n2. Accounting for DISCONTINUED OPERATIONS\n   → Results presented as single amount in P&L, separately from continuing operations\n\nScoped out of MEASUREMENT provisions only:\n(Still classified as HFS / in disclosure scope)\n→ Deferred tax assets (Ind AS 12)\n→ Financial assets (Ind AS 109)\n→ Biological assets at FV less costs to sell (Ind AS 41)\n→ Contractual rights (Ind AS 104)\n→ Employee benefit assets (Ind AS 19)\n\n📌 Ind AS 105 applies to NON-CURRENT assets only when sold individually.\n📌 A CURRENT asset sold individually → NEVER classified as HFS under Ind AS 105.\n📌 Current assets forming part of a DISPOSAL GROUP → included in the group." },
+
+  { id:37, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Key Definitions\n\nDefine:\n• Non-current asset\n• Disposal group\n• Discontinued operation\n• Highly probable\n• Firm purchase commitment",
+    back:"Non-current asset: Asset NOT meeting definition of current asset (not realisable within 12 months / operating cycle, not primarily for trading).\n\nDisposal group: Group of assets to be disposed TOGETHER IN A SINGLE TRANSACTION + directly associated liabilities. May be a CGU, single CGU, or part of CGU.\n→ Includes goodwill if CGU to which goodwill allocated (Ind AS 36).\n\nDiscontinued operation: COMPONENT of entity that either has been disposed of OR classified as HFS AND represents:\n(a) Separate major line of business or geographical area, OR\n(b) Part of coordinated plan to dispose of such, OR\n(c) Subsidiary acquired EXCLUSIVELY WITH A VIEW TO RESALE\n\nHighly probable: Significantly more likely than probable. (Probable = more likely than not.)\n\nFirm purchase commitment: Legally enforceable agreement with UNRELATED party; specifies all significant terms (price, timing); includes sufficient disincentive for non-performance." },
+
+  { id:38, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Classification as Held for Sale\n\nState the 2 KEY REQUIREMENTS.\nList the 5 criteria for HIGHLY PROBABLE.",
+    back:"2 KEY REQUIREMENTS:\n1. AVAILABLE FOR IMMEDIATE SALE in its present condition\n   (On terms usual and customary for sales of such assets)\n2. SALE IS HIGHLY PROBABLE\n\n5 Criteria for HIGHLY PROBABLE:\n(1) Appropriate level of management COMMITTED TO PLAN to sell\n(2) ACTIVE PROGRAMME to locate a buyer has been initiated\n(3) Asset actively MARKETED at price REASONABLE relative to current FV\n(4) Sale expected to be completed within ONE YEAR from date of classification\n(5) SIGNIFICANT CHANGES OR WITHDRAWAL from the plan are unlikely\n\nAdditional: Shareholders' approval (if required in jurisdiction) must be considered.\n\n📌 'Available for immediate sale' does NOT mean immediate transfer — usual customary terms (e.g., time to vacate a building) are acceptable.\n\n📌 Asset being REFURBISHED to enhance value → NOT available for immediate sale.\n\n📌 If sold individually, Ind AS 105 applies ONLY to NON-CURRENT assets." },
+
+  { id:39, standard:"Ind AS 105", category:"Theory Q&A", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – One-Year Rule Exceptions\n\nThe normal rule: sale must complete within ONE YEAR of classification. State the 2 general conditions AND 3 specific circumstances where beyond one year is acceptable.",
+    back:"General conditions (BOTH must be met):\n(i) Delay caused by EVENTS OR CIRCUMSTANCES BEYOND entity's control\n(ii) SUFFICIENT EVIDENCE entity remains committed to selling plan\n\n3 Specific circumstances:\n\n1. Buyer requires LONGER PERIOD for regulatory/other approvals\n→ Entity has firm purchase commitment AND active programme\n→ Example: Mining entity committed to sell; regulatory approval takes > 1 year; firm commitment highly probable within 1 year\n\n2. Unexpected CONDITIONS raised by buyer or regulatory body requiring ADDITIONAL TIME\n→ Entity actively RESPONDS to resolve conditions\n→ Expected to resolve within reasonable period\n→ Example: Firm commitment obtained but buyer inspection reveals environmental damage; entity making good the damage\n\n3. Assets/liabilities must be SEPARATED from other assets/liabilities before legal sale\n→ Entity has firm commitment AND active programme\n\n📌 These are NARROW exceptions. If conditions not met → asset reclassified out of HFS.\n📌 Market conditions deteriorating + no reasonable offers + price reduced → still qualifies if entity continues to actively market at reasonable price." },
+
+  { id:40, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:false,
+    front:"Ind AS 105 – Assets to be Abandoned\n\nCan assets to be ABANDONED be classified as held for sale?\nWhat about assets TEMPORARILY taken out of use?",
+    back:"Assets to be ABANDONED:\n→ CANNOT be classified as held for sale\n→ Reason: CA recovered through CONTINUING USE, not sale\n→ Exception: If disposal group to be abandoned meets criteria for DISCONTINUED OPERATION → disclosure requirements apply\n\nAssets to be abandoned include:\n• Assets to be used to end of economic life\n• Assets to be CLOSED rather than sold\n\nAssets TEMPORARILY taken out of use:\n→ CANNOT be classified as abandoned\n→ Example: Factory idle due to low demand but maintained in workable condition and expected to restart → neither abandoned nor HFS\n→ Depreciation CONTINUES (CA recovered through future use)\n\nSummary:\n| Situation | HFS? | Depreciation |\n|---|---|---|\n| Held for sale (criteria met) | ✅ Yes | STOPS |\n| To be abandoned | ❌ No | Continues |\n| Temporarily idle | ❌ No | Continues |" },
+
+  { id:41, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Measurement of Assets Held for Sale\n\nAt what amount are non-current assets classified as HFS measured?\nWhat happens to DEPRECIATION?\nWhat if sale > 1 year away?",
+    back:"Measurement: LOWER of:\n(1) CARRYING AMOUNT (measured per applicable Ind AS immediately before classification)\n(2) FAIR VALUE LESS COSTS TO SELL (FVLCTS)\n\nIf FVLCTS < CA → write-down to FVLCTS → IMPAIRMENT LOSS in P&L\nIf FVLCTS > CA → no write-up\n\nFor newly acquired disposal group as part of business combination:\n→ Measured at FVLCTS\n\nDepreciation/Amortisation:\n→ CEASES when asset classified as held for sale\n→ Interest & other expenses of disposal group LIABILITIES → continue to accrue\n\nIf sale expected BEYOND one year:\n→ Costs to sell → measured at PRESENT VALUE\n→ Increase in PV of costs to sell → presented as FINANCING COST\n\n📌 Cessation of depreciation is a critical distinguishing feature.\n📌 The asset is first measured per applicable Ind AS IMMEDIATELY BEFORE classification, then compared to FVLCTS." },
+
+  { id:42, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Subsequent Measurement & Reversal\n\nHow is the asset remeasured at subsequent reporting dates?\nCan a GAIN be recognised? Under what limit?",
+    back:"Subsequent measurement:\n→ Reassessed at each reporting date\n→ Asset continues at LOWER of CA and FVLCTS\n→ Further write-down if FVLCTS decreases → additional impairment in P&L\n\nReversal / Gain recognition:\n→ If FVLCTS INCREASES after previous write-down:\n→ Gain may be recognised, BUT limited to CUMULATIVE IMPAIRMENT LOSSES previously recognised under:\n   • Ind AS 105 (HFS impairment), AND\n   • Ind AS 36 (prior impairment before HFS classification)\n→ Any gain above cumulative losses → NOT recognised\n\nFor disposal groups:\n→ Scoped-out assets (Ind AS 109, 12, 2, 19) → remeasured per own standards BEFORE comparing disposal group FVLCTS\n→ Impairment allocated to in-scope assets in order:\n   (i) First reduce GOODWILL of disposal group to zero\n   (ii) Then pro rata to other non-current assets in measurement scope\n→ Scoped-out assets NOT allocated any impairment\n\n📌 On actual sale → full gain/loss on disposal recognised normally in P&L." },
+
+  { id:43, standard:"Ind AS 105", category:"Theory Q&A", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Reclassification Out of HFS\n\nAn asset classified as HFS no longer meets the criteria. How is it remeasured on reclassification?",
+    back:"Remeasurement on reclassification (criteria no longer met):\n\nAsset measured at LOWER of:\n(1) CA BEFORE HFS classification, ADJUSTED for:\n   → Depreciation/amortisation that WOULD HAVE BEEN recognised had asset NOT been classified as HFS (notional depreciation catch-up)\n   → Any revaluations that would have been recognised\n(2) RECOVERABLE AMOUNT at the date of decision not to sell\n\nRecognition:\n→ Adjustment included in P&L from CONTINUING OPERATIONS in the period criteria no longer met\n→ Same caption as gains/losses on HFS items (not meeting discontinued operations definition)\n\nIf previously part of DISCONTINUED OPERATION:\n→ Results previously classified as discontinued → reclassified as CONTINUING OPERATIONS\n→ Prior period comparative P&L → RESTATED\n\n📌 Entity cannot 'enjoy' the depreciation holiday — on reclassification, asset brought down as if depreciation had continued normally.\n📌 Lower of (adjusted CA) and (recoverable amount) prevents windfall gains on reclassification." },
+
+  { id:44, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Presentation in the Balance Sheet\n\nHow are HFS assets presented? How are liabilities of a disposal group presented?",
+    back:"Presentation of assets:\n→ Presented SEPARATELY from other assets in balance sheet\n→ Classified as CURRENT ASSETS\n→ Major classes of assets → disclosed separately in balance sheet or notes\n\nPresentation of liabilities:\n→ Presented SEPARATELY from other liabilities\n→ Must NOT be OFFSET against assets (cannot show as single net amount)\n→ Major classes → disclosed separately in balance sheet or notes\n\nException: Newly acquired subsidiary classified as HFS on acquisition → major class disclosure not required\n\nOther rules:\n→ Prior period comparative balance sheet NOT reclassified to show HFS classification\n→ Any cumulative income/expense in OCI relating to HFS asset → presented separately\n\n📌 Summary:\n• Assets → separate line, current assets section ✅\n• Liabilities → separate line, not offset against assets ✅\n• Prior period BS → NOT restated ❌\n• Prior period P&L (discontinued ops) → RESTATED ✅" },
+
+  { id:45, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Loss of Control in a Subsidiary\n\nAn entity commits to a sale plan involving LOSS OF CONTROL of a subsidiary. What classification and presentation rules apply?",
+    back:"When committed to sale plan involving LOSS OF CONTROL:\n→ ALL assets and liabilities of that subsidiary must be classified as HELD FOR SALE\n→ Applies REGARDLESS of whether entity retains a non-controlling interest after sale\n\nClassification criteria: Standard HFS criteria still apply:\n→ Available for immediate sale, sale is highly probable, completion within 1 year\n\nPresentation in consolidated balance sheet:\n→ All assets of subsidiary → single line 'Assets classified as held for sale' (current assets)\n→ All liabilities → single line 'Liabilities directly associated with assets classified as held for sale'\n→ Assets and liabilities presented SEPARATELY (NOT netted)\n\nPartial disposal (NO loss of control):\n→ Only individual assets/liabilities that individually meet criteria are classified as HFS\n→ Full subsidiary not classified\n\n📌 Key trigger = LOSS OF CONTROL, not just any sale of shares.\n📌 Even if some assets/liabilities of subsidiary are scoped out of measurement → still classified in disposal group and presented as HFS." },
+
+  { id:46, standard:"Ind AS 105", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Discontinued Operations: Definition & P&L Presentation\n\nWhat qualifies as a discontinued operation?\nHow are its results presented in P&L?",
+    back:"Discontinued operation: COMPONENT of entity that either has been disposed of OR classified as HFS AND represents:\n(a) Separate MAJOR LINE OF BUSINESS or geographical area, OR\n(b) Part of SINGLE COORDINATED PLAN to dispose of such, OR\n(c) Subsidiary acquired EXCLUSIVELY WITH A VIEW TO RESALE\n\nComponent = operations and cash flows clearly distinguishable operationally and for financial reporting from rest of entity.\n\nP&L Presentation:\n→ SINGLE AMOUNT on face of P&L comprising total of:\n   • Post-tax P&L from discontinued operation\n   • Post-tax gain/loss on disposal (or remeasurement to FVLCTS)\n\n→ ANALYSIS of this single amount → disclosed in NOTES or in P&L:\n   • Revenue, expenses, pre-tax P&L\n   • Related income tax expense\n   • Gain/loss on disposal/remeasurement + related income tax\n\n→ Comparative P&L: MUST BE RE-PRESENTED to show discontinued operations separately\n   (Even if not classified as discontinued in prior period)\n\n📌 Single-line presentation keeps continuing operations 'clean' for analysis." },
+
+  { id:47, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – What Does NOT Qualify as a Discontinued Operation?\n\nGive examples of situations that do NOT qualify, even if significant.",
+    back:"Does NOT qualify (fails to meet component/major line test):\n\n1. Winding down while COMPLETING EXISTING CONTRACTS:\n→ Group closes engineering contracting segment\n→ No new contracts, but existing contracts being completed\n→ During wind-down period → still earning revenue → CONTINUING OPERATION\n→ Only qualifies as discontinued ONCE the final contract is completed\n\n2. Shifting production location:\n→ Moving factory from one state to another\n→ Same line of business continues → NOT a separate major line or geographic area\n\n3. Eliminating ONE PRODUCT LINE within a segment:\n→ Discontinuing a product, but the segment continues\n→ NOT a 'separate major line of business'\n\n4. Partial disposal NOT involving loss of control:\n→ Selling a 10% stake (retaining 60% control)\n→ NOT a discontinued operation\n\n📌 Key two-part test:\n(1) Component being DISPOSED OF (sold or HFS)? AND\n(2) Does it represent a SEPARATE MAJOR LINE or geographical area?\nBoth required simultaneously." },
+
+  { id:48, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Comparative Restatement\n\nWhat comparative restatement is required for DISCONTINUED OPERATIONS in P&L?\nIs there comparative restatement in the BALANCE SHEET?",
+    back:"PROFIT AND LOSS — Comparative RESTATEMENT REQUIRED:\n→ When component classified as discontinued in CURRENT period → re-present prior period comparative P&L to show discontinued operations as SINGLE AMOUNT (separate from continuing operations)\n→ Applies even if NOT classified as discontinued in prior period\n→ Purpose: allows users to see 'clean' continuing operations for both periods (comparability)\n\nBALANCE SHEET — NO Comparative Restatement:\n→ Non-current assets/disposal groups classified as HFS → NOT reclassified in prior period balance sheets\n→ Appear as separate line items ONLY from the period of first classification\n→ Exception: applicable Ind AS requires restatement (rare)\n\nCash flow statement:\n→ No specific requirement to restate comparative cash flows\n→ Disclosure of cash flows from discontinued operations in notes is required\n\n📌 Summary:\n• P&L comparatives: RESTATED ✅\n• Balance sheet comparatives: NOT restated ❌\n• Cash flows: Disclosure in notes ✅" },
+
+  { id:49, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 105 – Held for Distribution to Owners\n\nWhat is held for distribution? How does it differ from held for sale?",
+    back:"Held for distribution to owners:\n→ Entity intends to distribute asset to its owners (shareholders) — NOT sell to third party\n\nClassification criteria (same as HFS, adapted):\n→ Available for IMMEDIATE DISTRIBUTION in present condition\n→ Distribution highly probable:\n   (1) Management committed to plan\n   (2) Shareholders' approval obtained (if required)\n   (3) Distribution expected within ONE YEAR\n\nMeasurement:\n→ LOWER of (CA) and (FAIR VALUE LESS COSTS TO DISTRIBUTE)\n   [NOT 'costs to sell' — different concept]\n\nCosts to distribute = incremental costs directly attributable to distribution, excluding finance costs and income tax.\n\nDepreciation: CEASES on classification as held for distribution.\n\nPresentation: Presented separately from other assets (similar to HFS).\n\nKey difference:\n| | Held for Sale | Held for Distribution |\n|---|---|---|\n| Recovery | Through SALE (cash) | Through DISTRIBUTION to owners |\n| Measurement | Lower of CA and FVLCTS | Lower of CA and FVLCTD |\n| Acquirer | Third party | Entity's own owners |" },
+
+  { id:50, standard:"Ind AS 105", category:"Theory Q&A", difficulty:"Basic", exam:false,
+    front:"Ind AS 105 – Ind AS 105 vs AS 24: Key Differences\n\nState 4 key differences between Ind AS 105 and old AS 24 (Discontinuing Operations).",
+    back:"1. Scope:\n   Ind AS 105 → covers BOTH held for sale assets AND discontinued operations as one standard\n   AS 24 → covered only discontinuing operations; no separate standard for HFS assets\n\n2. Definition:\n   Ind AS 105 → 'discontinued operation' = component already disposed of or classified as HFS (binary)\n   AS 24 → 'discontinuing operation' = ongoing process; disclosures from point of initial disclosure\n\n3. Measurement:\n   Ind AS 105 → explicit measurement at lower of CA and FVLCTS; cessation of depreciation\n   AS 24 → no specific measurement requirements for assets to be sold\n\n4. P&L Presentation:\n   Ind AS 105 → single line item on face of P&L (post-tax)\n   AS 24 → no specific single-line presentation requirement\n\n5. Comparative restatement:\n   Ind AS 105 → prior period comparative P&L MUST be restated\n   AS 24 → no mandatory comparative restatement\n\n6. Abandonment:\n   Ind AS 105 → assets to be abandoned CANNOT be classified as HFS (may meet discontinued criteria)\n   AS 24 → abandonment could qualify as a discontinuing operation" },
+
+  { id:51, standard:"Ind AS 105", category:"Formula", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Formula Card\n\nA property: cost ₹4,70,000, life 13 years (SL), acquired 1 April 20X1.\nOn 1 April 20X4 classified as HFS. FVLCTS at 31 March 20X4 = ₹1,00,000.\nOn 31 March 20X5 FVLCTS = ₹85,000.\nSold 30 Sept 20X5 for ₹90,000.\n\nCalculate: (1) CA before classification, (2) Impairment on classification, (3) Position at 31 March 20X5, (4) Gain on sale.",
+    back:"Annual depreciation = ₹4,70,000 ÷ 13 = ₹36,154\n\n(1) CA immediately before classification (end of Year 3 = 31 March 20X4):\nCA = ₹4,70,000 − (3 × ₹36,154) = ₹4,70,000 − ₹1,08,462 = ₹3,61,538 ≈ ₹3,62,000\n\n(2) Impairment on classification (1 April 20X4):\nFVLCTS = ₹1,00,000; CA = ₹3,62,000\nImpairment = ₹3,62,000 − ₹1,00,000 = ₹2,62,000 → recognised in P&L\nAsset carried at ₹1,00,000\n\nNote: Depreciation STOPS from date of HFS classification.\n\n(3) 31 March 20X5:\nFVLCTS falls to ₹85,000\nAdditional impairment = ₹1,00,000 − ₹85,000 = ₹15,000 → P&L\nAsset carried at ₹85,000\n\n(4) Sale 30 Sept 20X5 at ₹90,000:\nGain = ₹90,000 − ₹85,000 = ₹5,000 → recognised in P&L\n(Within cumulative impairment loss = ₹2,77,000; gain ₹5,000 is within this limit)" },
+
+  { id:52, standard:"Ind AS 105", category:"Quick Fire", difficulty:"Basic", exam:true,
+    front:"Ind AS 105 – Quick Fire\n\n1. HFS assets measured at: ___\n2. Depreciation on HFS assets: ___ (continues/stops)\n3. HFS assets in balance sheet: presented as ___ assets\n4. P&L — discontinued operations shown as: ___\n5. Asset to be ABANDONED: ___ (can/cannot) be HFS\n6. Comparative balance sheet: ___ restated\n7. Comparative P&L: ___ restated",
+    back:"1. HFS assets: LOWER OF carrying amount AND FVLCTS\n\n2. Depreciation: STOPS on classification as HFS\n\n3. HFS in balance sheet: CURRENT assets (separately from other assets)\n\n4. P&L — discontinued ops: SINGLE AMOUNT (post-tax total of P&L + gain/loss on disposal)\n\n5. Asset to be abandoned: CANNOT be classified as HFS\n\n6. Comparative balance sheet: NOT restated\n\n7. Comparative P&L: RESTATED to show discontinued operations separately\n\nBonus:\n→ Assets & liabilities of disposal group → cannot be offset (shown GROSS)\n→ 'Component' = operations and CFs clearly distinguishable from rest of entity\n→ Highly probable = significantly more likely than probable\n→ Loss of control in subsidiary → ALL assets & liabilities of subsidiary classified as HFS\n→ Interest on liabilities of disposal group → continues to accrue after HFS classification" },
+
+  // PRACTICAL – IND AS 2
+  { id:53, standard:"Ind AS 2", category:"Practical", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 2 – Practical: By-Product NRV & Joint Cost Allocation\n[Illustration 8 – Mars Ltd]\n\nCosts: Raw material ₹1,50,000 | Wages ₹90,000 | Fixed O/H ₹65,000 | Variable O/H ₹50,000\nOutput: MP1 – 5,000 units | MP2 – 4,000 units | BP – 2,000 units | Scrap realised ₹5,000\nClosing stock: MP1 – 250 units | MP2 – 100 units\nMarket price: MP1 @ ₹60/unit | MP2 @ ₹50/unit | BP @ ₹20/unit\nSeparate processing (BP): ₹8,000 | Packing (BP): ₹2,000\n\nCalculate closing stock values of MP1 and MP2.",
+    back:"Step 1 – NRV of By-product BP:\nSelling price: 2,000 × ₹20 = ₹40,000\nLess: Processing ₹8,000 + Packing ₹2,000 = (₹10,000)\nNRV of BP = ₹30,000\n\nStep 2 – Joint cost for allocation:\nTotal costs (1,50,000+90,000+65,000+50,000) = 3,55,000\nLess NRV of BP (30,000) and scrap (5,000) = (35,000)\nJoint cost = 3,20,000\n\nStep 3 – Allocation on relative sales value (ratio 3:2):\n             MP1         MP2\nUnits        5,000       4,000\nPrice        ₹60         ₹50\nSales value  3,00,000    2,00,000\nAllocation   1,92,000    1,28,000\nCost/unit    ₹38.40      ₹32.00\n\nStep 4 – Closing stock:\nMP1: 250 × ₹38.40 = ₹9,600\nMP2: 100 × ₹32.00 = ₹3,200" },
+
+  { id:54, standard:"Ind AS 2", category:"Practical", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Practical: FIFO vs Weighted Average\n[Illustration 11 – Mercury Ltd]\n\nMercury Ltd periodic inventory system 20X1-20X2:\nApril     Opening inventory  200 units @ ₹10 = ₹2,000\nMay       Purchase           50 units @ ₹11 = ₹550\nSeptember Purchase          400 units @ ₹12 = ₹4,800\nFebruary  Purchase          350 units @ ₹14 = ₹4,900\nTotal                       1,000 units      ₹12,250\n\nPhysical inventory at 31.3.20X2: 400 units.\nCalculate closing inventory and cost of sales under (a) FIFO and (b) Weighted Average.",
+    back:"(a) FIFO Method:\nClosing inventory (400 units – most recent purchases first):\n350 units @ ₹14 = ₹4,900\n50 units @ ₹12  = ₹600\nClosing inventory = ₹5,500\nCost of sales = ₹12,250 − ₹5,500 = ₹6,750\n\n(b) Weighted Average:\nWA cost = ₹12,250 ÷ 1,000 = ₹12.25 per unit\nClosing inventory = 400 × ₹12.25 = ₹4,900\nCost of sales = ₹12,250 − ₹4,900 = ₹7,350\n\nComparison:\n                  FIFO      Wtd Avg\nClosing inventory ₹5,500    ₹4,900\nCost of sales     ₹6,750    ₹7,350\n\nIn a RISING price environment: FIFO gives higher closing inventory and lower COGS.\nLIFO is NOT permitted under Ind AS 2." },
+
+  { id:55, standard:"Ind AS 2", category:"Practical", difficulty:"Basic", exam:true,
+    front:"Ind AS 2 – Practical: NRV Item-by-Item vs Group Basis\n[Illustration 17 – Sun Pharma Ltd]\n\nItem   Cost    NRV\nA      2,000   1,900\nB      5,000   5,100\nC      4,400   4,550\nD      3,200   2,990\nTotal  14,600  14,540\n\nCalculate inventory value on (a) item-by-item basis and (b) group basis.\nWhich is CORRECT as per Ind AS 2? What is the write-down?",
+    back:"(a) ITEM-BY-ITEM BASIS (CORRECT per Ind AS 2):\n\nItem  Cost   NRV    Lower    Basis\nA     2,000  1,900  1,900    NRV < cost → write down ₹100\nB     5,000  5,100  5,000    Cost < NRV → no write down\nC     4,400  4,550  4,400    Cost < NRV → no write down\nD     3,200  2,990  2,990    NRV < cost → write down ₹210\nTotal                14,290\n\nTotal write-down = ₹100 + ₹210 = ₹310\n\n(b) GROUP BASIS (NOT permitted — shown only to explain concept):\nTotal cost (14,600) vs Total NRV (14,540)\nGroup value = ₹14,540\n\nInd AS 2 requires item-by-item → correct answer is ₹14,290.\nGroup basis (₹14,540) overstates inventory by allowing surpluses on B & C to offset write-downs on A & D." },
+
+  // PRACTICAL – IND AS 36
+  { id:56, standard:"Ind AS 36", category:"Practical", difficulty:"Basic", exam:true,
+    front:"Ind AS 36 – Practical: Impairment Loss Calculation\n[Illustration 4 – Jupiter Ltd]\n\nJupiter Ltd has a furnace on the balance sheet at ₹250 lakh (31 March 20X1).\nAt that date: Value in Use = ₹200 lakh | Fair value = ₹200 lakh | Cost of disposal = ₹13 lakh.\n\nCalculate the impairment loss.",
+    back:"Step 1 – FVLCD:\nFVLCD = Fair value − Cost of disposal = ₹200L − ₹13L = ₹187 lakh\n\nStep 2 – Recoverable Amount:\nRA = Higher of FVLCD and VIU = Higher of ₹187L and ₹200L = ₹200 lakh\n\nStep 3 – Impairment Loss:\nIL = Carrying Amount − Recoverable Amount = ₹250L − ₹200L = ₹50 lakh\n\nRecognition: ₹50 lakh recognised immediately in Profit or Loss (cost model asset).\n\nKey points:\nFVLCD (₹187L) < VIU (₹200L) → VIU is used as RA, which reduces impairment.\nFVLCD ≠ Fair Value. Always deduct costs of disposal.\nAfter recognition: revised CA = ₹200L; depreciation adjusted going forward." },
+
+  { id:57, standard:"Ind AS 36", category:"Practical", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 36 – Practical: CGU Impairment + Reversal\n[Illustration 10 – Venus Ltd / Saturn Ltd]\n\nVenus Ltd acquired 100% Saturn Ltd on 1 April 20X1 for ₹4,00,000.\nFV of identifiable assets = ₹3,20,000 | Goodwill = ₹80,000 | Life 20 years SL, no residual.\n\n31 March 20X3 (Year 2): Govt cancelled licences. VIU = ₹2,12,000.\n31 March 20X5 (Year 4): Licences reinstated. VIU = ₹3,04,000 | FVLCD = ₹2,90,000.\n\nCalculate: (a) Impairment at 31.3.20X3 and allocation, (b) Reversal at 31.3.20X5.",
+    back:"(a) Impairment at 31 March 20X3 (Year 2):\n\nCGU Carrying Amounts:\nGoodwill = ₹80,000 (not depreciated)\nOther assets = ₹3,20,000 − (₹16,000 × 2) = ₹2,88,000\nTotal CGU CA = ₹3,68,000\n\nRA = VIU = ₹2,12,000\nImpairment Loss = ₹3,68,000 − ₹2,12,000 = ₹1,56,000\n\nAllocation:\n1st → Goodwill fully eliminated: (₹80,000)\n2nd → Other assets: (₹76,000)\nRevised CA of other assets: ₹2,88,000 − ₹76,000 = ₹2,12,000\n\n(b) Reversal at 31 March 20X5 (Year 4):\n\nCA of other assets at 31.3.20X5:\nRevised dep = ₹2,12,000 ÷ 18 years × 2 ≈ ₹24,000 (rounded)\nCA = ₹2,12,000 − ₹24,000 = ₹1,88,000\n\nReversal CEILING (CA had no impairment at Year 4):\n₹3,20,000 − (₹16,000 × 4) = ₹3,20,000 − ₹64,000 = ₹2,56,000\n\nRA at reversal = max(₹3,04,000, ₹2,90,000) = ₹3,04,000\nReversal = min(₹3,04,000, ₹2,56,000) − ₹1,88,000 = ₹68,000\n\nNew CA = ₹2,56,000 | New annual dep = ₹2,56,000 ÷ 16 = ₹16,000\nGoodwill impairment ₹80,000 → CANNOT be reversed." },
+
+  { id:58, standard:"Ind AS 36", category:"Theory Q&A", difficulty:"Basic", exam:false,
+    front:"Ind AS 36 – AS 28 vs Ind AS 36\n\nState 4 key differences between Ind AS 36 and old AS 28.",
+    back:"1. Fair Value Measurement Standard:\nInd AS 36 → uses Ind AS 113 Fair Value Measurement to determine FV in FVLCD\nAS 28 → no separate FV measurement standard; FV determined under AS 28 itself\n\n2. NCI Goodwill Grossing Up:\nInd AS 36 → specific guidance on grossing up partially recognised goodwill (partial goodwill method) before impairment test\nAS 28 → no such guidance\n\n3. Scope Exclusions:\nInd AS 36 → excludes assets per Ind AS 109, 12, 19, 41, 115, 117, 105 (new Ind AS framework)\nAS 28 → exclusions aligned to old AS framework equivalents\n\n4. Discount Rate Guidance:\nInd AS 36 → detailed guidance on surrogates (WACC, incremental borrowing rate) when asset-specific rate unavailable\nAS 28 → similar in principle but less detailed\n\n5. Reversal of goodwill impairment:\nInd AS 36 → PROHIBITS reversal of goodwill impairment — NEVER reversible\nAS 28 → ALLOWS reversal IF caused by a specific external event of exceptional nature not expected to recur AND subsequent external events reverse the effect of that event\n\n6. Annual impairment test:\nInd AS 36 → MANDATORY annual test for goodwill + indefinite-life intangibles + intangibles not yet available for use (regardless of indicators)\nAS 28 → does NOT require mandatory annual testing for goodwill; tests only when there is an INDICATION of impairment" },
+
+  // PRACTICAL – IND AS 105
+  { id:59, standard:"Ind AS 105", category:"Practical", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 105 – Practical: Reclassification Out of HFS\n[Illustration 2 – S Ltd]\n\nS Ltd purchased property ₹6,00,000 on 1 April 20X1. Useful life 15 years SL.\n\n31 March 20X3 (Year 2): Classified as HFS.\nImpairment testing before classification: RA = ₹4,70,000 (impairment ₹50,000)\nFVLCTS = ₹4,60,000. Asset recorded at ₹4,60,000.\n\n31 March 20X4 (Year 3): Plan abandoned — HFS criteria no longer met.\nRecoverable amount at 31.3.20X4 = ₹5,00,000.\n\nCalculate: (a) P&L charges for year 31.3.20X3, (b) Value of property at 31.3.20X4.",
+    back:"(a) 31 March 20X3 — Year of HFS Classification:\n\nCA before classification per Ind AS 16:\nCost                                  ₹6,00,000\nLess: Dep 2 years (6,00,000/15×2)     (₹80,000)\nLess: Impairment loss (5,20,000−4,70,000) (₹50,000)\nCA after impairment testing           ₹4,70,000\n\nOn HFS classification: Lower of CA (₹4,70,000) and FVLCTS (₹4,60,000) = ₹4,60,000\nAdditional HFS write-down = ₹10,000\n\nTotal charged to P&L in Year 20X3:\nDepreciation ₹40,000 + Impairment ₹60,000 (₹50,000 + ₹10,000) = ₹1,00,000\nProperty recorded at ₹4,60,000\n\n(b) 31 March 20X4 — Reclassification back:\n\nNotional depreciation catch-up (1 year):\nCA immediately before HFS = ₹4,70,000 (pre-HFS write-down CA)\nRemaining life = 13 years; Annual dep = ₹4,70,000 ÷ 13 = ₹36,154\nAdjusted CA = ₹4,70,000 − ₹36,154 = ₹4,33,846\n\nLower of adjusted CA (₹4,33,846) and RA (₹5,00,000) = ₹4,33,846\n\nAdjustment to P&L (continuing operations):\n₹4,60,000 − ₹4,33,846 = ₹26,154 charged to P&L" },
+
+  { id:60, standard:"Ind AS 105", category:"Concept", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 105 – Disclosures for HFS Assets & Discontinued Operations\n\nWhat must be disclosed for (a) non-current assets held for sale and (b) discontinued operations?",
+    back:"(a) HFS non-current assets (or disposal groups):\n1. Description of the asset / disposal group\n2. Facts and circumstances of the sale; expected manner and timing\n3. Gain/loss on initial or subsequent write-down (if not on face of P&L → caption used)\n4. Reportable segment (Ind AS 108)\n5. If there is a CHANGE OF PLAN:\n   Description of facts/circumstances; effect on results\n\nNote: Prior period comparative BALANCE SHEET → NOT restated.\n\n(b) Discontinued operations:\n1. Description of the discontinued operation\n2. Segment in which reported\n3. Date and manner of disposal\n4. Gain/loss on disposal (before/after tax)\n5. Cash flows: Operating | Investing | Financing\n   (In notes or on face of cash flow statement)\n6. Revenue, expenses, pre-tax P&L for the period\n7. Related income tax expense\n8. Consideration received/receivable; net assets disposed of\n\nNote: Prior period comparative P&L → MUST be restated for discontinued operations." },
+];
+
+const STANDARDS  = ["All","Ind AS 2","Ind AS 36","Ind AS 105"];
+const CATEGORIES = ["All","Concept","Formula","Theory Q&A","Quick Fire","Practical"];
+const CAT_COLORS  = { Concept:"#3B82F6", Formula:"#8B5CF6", Practical:"#F59E0B", "Theory Q&A":"#10B981", "Quick Fire":"#EF4444" };
+const STD_COLORS  = { "Ind AS 2":"#3B82F6", "Ind AS 36":"#8B5CF6", "Ind AS 105":"#F59E0B" };
+const DIFF_COLORS = { Basic:"#22C55E", Intermediate:"#F59E0B", Advanced:"#EF4444" };
+
+const S = {
+  page: { minHeight:"100dvh", background:"#0A0F1E", display:"flex", flexDirection:"column", alignItems:"center", maxWidth:430, margin:"0 auto", overflowX:"hidden", paddingTop:"env(safe-area-inset-top,0px)" },
+  homeWrap: { width:"100%", padding:"20px 20px 40px", display:"flex", flexDirection:"column", alignItems:"center", paddingBottom:"calc(40px + env(safe-area-inset-bottom,0px))" },
+  header: { width:"100%", background:"linear-gradient(135deg,#1e1b4b 0%,#0f172a 100%)", borderRadius:20, padding:"24px 20px 20px", textAlign:"center", border:"1px solid #312e81", marginBottom:20 },
+  badge: { background:"#312e81", color:"#a5b4fc", fontSize:10, fontFamily:"Arial,sans-serif", letterSpacing:2, padding:"4px 12px", borderRadius:20, display:"inline-block", marginBottom:10 },
+  title: { color:"#fff", fontSize:26, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
+  subtitle: { color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", marginBottom:18 },
+  statsRow: { display:"flex", gap:10, justifyContent:"center" },
+  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", marginBottom:14 },
+  catCard: { background:"#0f172a", border:"1.5px solid", borderRadius:14, padding:"14px 12px", textAlign:"left", cursor:"pointer", display:"flex", flexDirection:"column", gap:4, WebkitAppearance:"none" },
+  catDot: { width:8, height:8, borderRadius:"50%", marginBottom:4 },
+  catName: { color:"#e2e8f0", fontSize:13, fontWeight:600, fontFamily:"Arial,sans-serif" },
+  catCnt: { color:"#64748b", fontSize:12, fontFamily:"Arial,sans-serif" },
+  mainBtn: { width:"100%", background:"linear-gradient(135deg,#6366f1,#8B5CF6)", color:"#fff", border:"none", borderRadius:14, padding:"15px", fontSize:15, fontWeight:700, fontFamily:"Arial,sans-serif", cursor:"pointer", letterSpacing:0.5, marginTop:8, WebkitAppearance:"none" },
+  outlineBtn: { background:"transparent", border:"1.5px solid #8B5CF6", color:"#a78bfa" },
+  statsBtn: { background:"transparent", border:"1.5px solid #475569", color:"#94a3b8" },
+  backBtn: { color:"#94a3b8", background:"none", border:"none", fontSize:15, cursor:"pointer", alignSelf:"flex-start", fontFamily:"Arial,sans-serif", padding:"8px 0", marginBottom:8 },
+  statsDetail: { display:"flex", gap:12, marginTop:8, marginBottom:14, width:"100%" },
+  statBlock: { flex:1, background:"#0f172a", borderRadius:16, padding:"16px 10px", textAlign:"center" },
+  bigNum: { fontSize:32, fontWeight:700 },
+  bigLbl: { color:"#94a3b8", fontSize:12, fontFamily:"Arial,sans-serif", marginTop:4 },
+  pBarWrap: { width:"100%", height:8, background:"#1e293b", borderRadius:4, overflow:"hidden" },
+  topBar: { width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px 8px", background:"#0A0F1E", position:"sticky", top:0, zIndex:10, flexShrink:0 },
+  iconBtn: { background:"#1e293b", border:"none", borderRadius:10, width:38, height:38, fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", WebkitAppearance:"none" },
+  diffBadge: { fontSize:10, color:"#000", padding:"2px 8px", borderRadius:10, fontWeight:700, fontFamily:"Arial,sans-serif" },
+  pill: { border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontFamily:"Arial,sans-serif", cursor:"pointer", whiteSpace:"nowrap", fontWeight:600, flexShrink:0, WebkitAppearance:"none" },
+  pTrack: { width:"calc(100% - 40px)", height:3, background:"#1e293b", borderRadius:2, overflow:"hidden", margin:"0 20px 10px", flexShrink:0 },
+  pFill: { height:"100%", background:"linear-gradient(90deg,#6366f1,#8B5CF6)", borderRadius:2, transition:"width 0.3s" },
+  pBarFill: { height:"100%", borderRadius:4, transition:"width 0.4s" },
+  catTag: { fontSize:11, color:"#fff", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:10, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:0.5, flexShrink:0 },
+  examTag: { fontSize:11, color:"#fbbf24", background:"#1c1200", border:"1px solid #d97706", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  stdTag: { fontSize:10, color:"#a5b4fc", background:"rgba(99,102,241,0.15)", border:"1px solid #312e81", padding:"2px 8px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  question: { color:"#e2e8f0", fontSize:15, lineHeight:1.6, flex:1, display:"flex", alignItems:"flex-start", whiteSpace:"pre-line", fontFamily:"Georgia,serif" },
+  answer: { color:"#d1fae5", fontSize:12.5, lineHeight:1.75, whiteSpace:"pre-line", fontFamily:"Arial,sans-serif", flex:1 },
+  actionRow: { display:"flex", gap:12, width:"calc(100% - 40px)", margin:"10px 0 4px", flexShrink:0 },
+  noBtn: { flex:1, background:"#1c0a0a", border:"1.5px solid #EF4444", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  yesBtn: { flex:1, background:"#0a1c0a", border:"1.5px solid #22C55E", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  navRow: { display:"flex", alignItems:"center", justifyContent:"space-between", width:"calc(100% - 40px)", margin:"8px 0 4px", gap:8, flexShrink:0 },
+  navBtn: { background:"#1e293b", color:"#94a3b8", border:"none", borderRadius:10, padding:"10px 16px", fontSize:14, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, WebkitAppearance:"none" },
+  shuffleBtn: { background:"#1e293b", color:"#a5b4fc", border:"1px solid #312e81", borderRadius:10, padding:"10px 14px", fontSize:12, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, flex:1, WebkitAppearance:"none" },
+  emptyState: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 20px", width:"100%" },
+  revealBtn: { width:"100%", padding:"12px", borderRadius:12, border:"1px solid #4f46e5", background:"rgba(99,102,241,0.15)", color:"#a5b4fc", fontSize:13, fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:"0.5px", cursor:"pointer" },
+};
+
+function Pill({ num, lbl }) {
+  return (
+    <div style={{ background:"#1e293b", borderRadius:12, padding:"8px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+      <span style={{color:"#a5b4fc",fontSize:20,fontWeight:700}}>{num}</span>
+      <span style={{color:"#64748b",fontSize:11,fontFamily:"Arial,sans-serif"}}>{lbl}</span>
+    </div>
+  );
+}
+
+function App() {
+  const saved = loadProgress();
+  const [page, setPage]       = useState("home");
+  const [selStd, setSelStd]   = useState("All");
+  const [selCat, setSelCat]   = useState("All");
+  const [examOnly, setExamOnly] = useState(false);
+  const [deck, setDeck]       = useState(cards);
+  const [idx, setIdx]         = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known, setKnown]     = useState(() => new Set(saved.known));
+  const [unknown, setUnknown] = useState(() => new Set(saved.unknown));
+  const [shuffled, setShuffled] = useState(false);
+  const [toast, setToast]   = useState("");
+  const touchX = useRef(null);
+  const touchY = useRef(null);
+
+  useEffect(() => {
+    let f = cards;
+    if (selStd !== "All") f = f.filter(c => c.standard === selStd);
+    if (selCat !== "All") f = f.filter(c => c.category === selCat);
+    if (examOnly) f = f.filter(c => c.exam);
+    if (shuffled) f = [...f].sort(() => Math.random() - 0.5);
+    setDeck(f); setIdx(0); setFlipped(false);
+  }, [selStd, selCat, examOnly, shuffled]);
+
+  useEffect(() => { saveProgress(known, unknown); }, [known, unknown]);
+
+  const cur = deck[idx] || null;
+  const progress = deck.length ? Math.round((idx / deck.length) * 100) : 0;
+  const knownCount   = [...known].filter(id => deck.find(c => c.id === id)).length;
+  const unknownCount = [...unknown].filter(id => deck.find(c => c.id === id)).length;
+
+  const go = (dir) => {
+    setFlipped(false);
+    setTimeout(() => {
+      setIdx(i => { if (dir===1 && i<deck.length-1) return i+1; if (dir===-1 && i>0) return i-1; return i; });
+    }, 80);
+  };
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
+  const handleSave = () => { saveProgress(known, unknown); showToast("Progress saved!"); };
+  const mark = (type) => {
+    if (!cur) return;
+    if (type === "know") {
+      setKnown(s => new Set([...s, cur.id]));
+      setUnknown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    } else {
+      setUnknown(s => new Set([...s, cur.id]));
+      setKnown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    }
+    go(1);
+  };
+
+  const startStudy = (std, cat, examOnlyMode) => {
+    setSelStd(std || "All"); setSelCat(cat || "All");
+    setExamOnly(examOnlyMode || false);
+    setShuffled(false); setIdx(0); setFlipped(false);
+    setPage("study");
+  };
+
+  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; touchY.current = e.touches[0].clientY; };
+  const onTouchEnd   = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    touchX.current = null;
+    if (Math.abs(dx) < 50 || dy > Math.abs(dx) * 0.6) return;
+    if (dx < 0) go(1); else go(-1);
+  };
+
+  // ── HOME ────────────────────────────────────────────
+  if (page === "home") return (
+    <div style={S.page}>
+      <div style={S.homeWrap}>
+        <div style={S.header}>
+          <div style={S.badge}>CA FINALS · GROUP I · FR</div>
+          <div style={S.title}>Ind AS 2, 36 &amp; 105</div>
+          <div style={S.subtitle}>Inventories · Impairment · Held for Sale &amp; Discontinued Ops</div>
+          <div style={S.statsRow}>
+            <Pill num={cards.length} lbl="Cards"/>
+            <Pill num={5} lbl="Categories"/>
+            <Pill num={cards.filter(c=>c.exam).length} lbl="Exam Qs"/>
+          </div>
+        </div>
+
+        {/* Category grid */}
+        <div style={S.grid}>
+          {CATEGORIES.filter(c=>c!=="All").map(c => (
+            <button key={c} style={{...S.catCard, borderColor:CAT_COLORS[c]}}
+              onClick={() => startStudy("All", c, false)}>
+              <div style={{...S.catDot, background:CAT_COLORS[c]}}/>
+              <div style={S.catName}>{c}</div>
+              <div style={S.catCnt}>{cards.filter(x=>x.category===c).length} cards</div>
+            </button>
+          ))}
+        </div>
+
+        <button style={S.mainBtn} onClick={() => startStudy("All","All",false)}>
+          Study All {cards.length} Cards →
+        </button>
+        <button style={{...S.mainBtn,...S.outlineBtn}} onClick={() => startStudy("All","All",true)}>
+          ⚡ Exam Questions Only
+        </button>
+        <button style={{...S.mainBtn,...S.statsBtn}} onClick={() => setPage("stats")}>
+          📊 View Progress
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── STATS ───────────────────────────────────────────
+  if (page === "stats") {
+    const pct = Math.round(known.size / (cards.length || 1) * 100);
+    return (
+      <div style={S.page}>
+        <div style={S.homeWrap}>
+          <button style={S.backBtn} onClick={() => setPage("home")}>← Back</button>
+          <div style={{...S.title, marginBottom:24}}>Your Progress</div>
+          <div style={S.statsDetail}>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#22C55E"}}>{known.size}</div><div style={S.bigLbl}>✅ Know It</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#EF4444"}}>{unknown.size}</div><div style={S.bigLbl}>🔁 Review</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#64748b"}}>{cards.length - known.size - unknown.size}</div><div style={S.bigLbl}>⏳ Unseen</div></div>
+          </div>
+          <div style={S.pBarWrap}>
+            <div style={{...S.pBarFill, width:`${pct}%`, background:"linear-gradient(90deg,#22C55E,#86efac)"}}/>
+          </div>
+          <div style={{color:"#94a3b8", textAlign:"center", fontSize:13, marginTop:8, fontFamily:"Arial,sans-serif", marginBottom:24}}>
+            {pct}% mastered · Progress saved across sessions
+          </div>
+          {unknown.size > 0 && (
+            <button style={{...S.mainBtn, marginTop:8}} onClick={() => {
+              const ids = new Set([...unknown]);
+              const reviewDeck = cards.filter(c => ids.has(c.id));
+              setDeck(reviewDeck); setIdx(0); setFlipped(false); setPage("study");
+            }}>🔁 Review Weak Cards ({unknown.size})</button>
+          )}
+          <button style={{...S.mainBtn,...S.outlineBtn, marginTop:10}} onClick={() => { if(window.confirm('Reset all progress?')) { setKnown(new Set()); setUnknown(new Set()); }}}>
+            Reset Progress
+          </button>
+          <button style={{...S.mainBtn, background:"linear-gradient(135deg,#059669,#10b981)", marginTop:10}} onClick={handleSave}>
+            💾 Save Progress Now
+          </button>
+          <button style={{...S.mainBtn,...S.statsBtn, marginTop:10}} onClick={() => setPage("home")}>
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STUDY ───────────────────────────────────────────
+  return (
+    <div style={S.page} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div style={S.topBar}>
+        <button style={S.iconBtn} onClick={() => { setExamOnly(false); setPage("home"); }}>🏠</button>
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
+          <div style={{color:"#e2e8f0", fontSize:14, fontWeight:600, fontFamily:"Arial,sans-serif"}}>{idx+1} / {deck.length}</div>
+          {cur && <div style={{...S.diffBadge, background:DIFF_COLORS[cur.difficulty]||"#666"}}>{cur.difficulty}</div>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button style={{...S.iconBtn,fontSize:12,width:"auto",padding:"0 10px",color:"#4ade80"}} onClick={handleSave}>💾</button>
+          <button style={S.iconBtn} onClick={() => setPage("stats")}>📊</button>
+        </div>
+      </div>
+
+      {/* Category filter */}
+      <div className="filter-scroll" style={{paddingBottom:6, flexShrink:0}}>
+        {CATEGORIES.map(c => (
+          <button key={c} style={{...S.pill, background:selCat===c?(CAT_COLORS[c]||"#3B82F6"):"#1e293b", color:selCat===c?"#fff":"#94a3b8"}}
+            onClick={() => setSelCat(c)}>{c}</button>
+        ))}
+        <button style={{...S.pill, background:examOnly?"#d97706":"#1e293b", color:examOnly?"#fff":"#94a3b8"}}
+          onClick={() => setExamOnly(f=>!f)}>⚡ Exam</button>
+      </div>
+
+      <div style={S.pTrack}><div style={{...S.pFill, width:`${progress}%`}}/></div>
+
+      {cur ? (
+        <div className="card-area no-select">
+          <div className={`card${flipped?" flipped":""}`}>
+            <div className="face face-front">
+              <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:8}}>
+                <span style={{...S.catTag, background:CAT_COLORS[cur.category]||"#555", marginBottom:0}}>{cur.category}</span>
+                <span style={{...S.stdTag, marginBottom:0}}>{cur.standard}</span>
+                {cur.exam && <span style={{...S.examTag, marginBottom:0}}>⚡ EXAM Q</span>}
+                {known.has(cur.id) && <span style={{fontSize:10, color:"#22c55e", background:"rgba(34,197,94,0.1)", padding:"2px 8px", borderRadius:20, fontFamily:"Arial,sans-serif", fontWeight:700}}>✓ Known</span>}
+              </div>
+              <div style={S.question}>{cur.front}</div>
+            </div>
+            <div className="face face-back">
+              <div style={{...S.catTag, background:CAT_COLORS[cur.category]||"#555"}}>Answer</div>
+              <div style={S.answer}>{cur.back}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={S.emptyState}>
+          <div style={{fontSize:48}}>🎉</div>
+          <div style={{color:"#fff", fontSize:18, fontWeight:700, marginTop:12}}>All Done!</div>
+          <div style={{color:"#94a3b8", fontSize:14, marginTop:6, fontFamily:"Arial,sans-serif"}}>You've reviewed all cards in this set</div>
+          <button style={{...S.mainBtn, marginTop:24}} onClick={() => { setIdx(0); setFlipped(false); }}>Restart</button>
+        </div>
+      )}
+
+      {flipped && cur && (
+        <div style={S.actionRow}>
+          <button style={S.noBtn} onClick={(e)=>{ e.stopPropagation(); mark("dontknow"); }}>
+            <span style={{fontSize:20}}>🔁</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Review Again</span>
+          </button>
+          <button style={S.yesBtn} onClick={(e)=>{ e.stopPropagation(); mark("know"); }}>
+            <span style={{fontSize:20}}>✅</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Got It!</span>
+          </button>
+        </div>
+      )}
+
+      <div style={S.navRow}>
+        <button style={{...S.navBtn, opacity:idx===0?0.3:1}} onClick={() => go(-1)} disabled={idx===0}>‹ Prev</button>
+        <button style={S.shuffleBtn} onClick={() => setShuffled(s=>!s)}>{shuffled?"🔀 Shuffled":"🔀 Shuffle"}</button>
+        <button style={{...S.navBtn, opacity:idx>=deck.length-1?0.3:1}} onClick={() => go(1)} disabled={idx>=deck.length-1}>Next ›</button>
+      </div>
+
+      {cur && (
+        <div style={{padding:"0 20px 8px", width:"100%", paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+          <button onClick={() => setFlipped(f=>!f)} style={S.revealBtn}>
+            {flipped ? "↑ BACK TO QUESTION" : "TAP TO REVEAL ANSWER ↓"}
+          </button>
+        </div>
+      )}
+    {toast && (
+      <div style={{position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",background:"#0f172a",border:"1px solid #22c55e",color:"#4ade80",padding:"10px 22px",borderRadius:14,fontFamily:"Arial,sans-serif",fontSize:13,fontWeight:700,zIndex:999,pointerEvents:"none",boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}}>
+        ✅ {toast}
+      </div>
+    )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
