@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>FR · Ind AS 41</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    body {
+      background: #0A0F1E;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #root { height: 100%; }
+    ::-webkit-scrollbar { display: none; }
+    .card-area {
+      width: calc(100% - 40px);
+      margin: 0 20px;
+      height: 390px;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .card { width: 100%; height: 100%; position: relative; border-radius: 20px; }
+    .card.flipped .face-front { opacity: 0; pointer-events: none; }
+    .card.flipped .face-back  { opacity: 1; pointer-events: auto; }
+    .face {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      transition: opacity 0.3s ease;
+    }
+    .face-front {
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      border-color: #312e81;
+      opacity: 1; pointer-events: auto; z-index: 2;
+    }
+    .face-back {
+      background: linear-gradient(145deg, #0f1929 0%, #0c1a0f 100%);
+      border-color: #14532d;
+      opacity: 0; pointer-events: none; z-index: 1;
+    }
+    .filter-scroll {
+      display: flex; gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 20px;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+    .no-select { -webkit-user-select: none; user-select: none; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const STORAGE_KEY = 'indas41_progress_v1';
+
+function loadProgress() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : { known: [], unknown: [] }; }
+  catch(e) { return { known: [], unknown: [] }; }
+}
+function saveProgress(known, unknown) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ known: [...known], unknown: [...unknown] })); } catch(e) {}
+}
+
+const cards = [
+  // ══════════════════════════════════════════════════════
+  // IND AS 41 – AGRICULTURE
+  // ══════════════════════════════════════════════════════
+
+  // ── CONCEPT ──────────────────────────────────────────
+  { id:1, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Objective & Introduction\n\nWhat is the core objective of Ind AS 41?\nWhat significant accounting shift does it introduce?\nWhat 3 items does it apply to?",
+    back:"Ind AS 41 is the FIRST standard specifically covering accounting and reporting for the primary sector (agriculture and allied industries).\n\nCore objective:\n→ Prescribe accounting for agricultural activity — the management of biological transformation of biological assets into agricultural produce.\n→ Generally requires biological assets to be measured at FAIR VALUE LESS COSTS TO SELL.\n\nSignificant shift:\n→ Introduces FAIR VALUE MODEL (departure from traditional cost model widely used in primary industry)\n\nApplies to the following (when they relate to agricultural activity):\n(a) Biological assets\n(b) Agricultural produce at the point of harvest\n(c) Government grants\n\nKey issues addressed:\n(a) When to recognise a biological asset or agricultural produce on the balance sheet\n(b) At what value to measure a recognised biological asset or agricultural produce\n(c) How to account for differences in value between two reporting dates\n(d) What disclosures are required" },
+
+  { id:2, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Scope Exclusions\n\nList the items to which Ind AS 41 does NOT apply.\nFor bearer plants, what is the key exception?\nWhen does Ind AS 41 apply to agricultural produce?",
+    back:"Ind AS 41 does NOT apply to:\n\n(a) Land related to agricultural activity → Ind AS 16 / Ind AS 40\n(b) Bearer plants related to agricultural activity → Ind AS 16\n   ✅ EXCEPTION: Standard APPLIES to the PRODUCE growing ON bearer plants\n(c) Government grants related to bearer plants → Ind AS 20\n(d) Intangible assets associated with agricultural activity (e.g., licences, rights) → Ind AS 38\n(e) Right-of-use assets arising from lease of land related to agricultural activity → Ind AS 116\n\nAgricultural produce:\n→ Ind AS 41 applies ONLY at the POINT OF HARVEST\n→ BEFORE harvest: produce is part of the biological asset (NOT accounted separately)\n→ AFTER harvest: Ind AS 2 or another applicable standard applies\n\nExamples:\n| Biological Asset | Agricultural Produce | Post-Harvest Product |\n|---|---|---|\n| Sheep | Wool | Yarn, carpet |\n| Dairy cattle | Milk | Cheese |\n| Tea bushes (bearer) | Picked leaves | Tea |\n| Grape vines (bearer) | Picked grapes | Wine |" },
+
+  { id:3, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Agricultural Activity\n\nDefine agricultural activity.\nState the 3 common features ALL agricultural activities share.\nGive 2 examples of activities that are NOT agricultural activity.",
+    back:"Agricultural activity: Management by an entity of the BIOLOGICAL TRANSFORMATION and HARVEST of biological assets for SALE or for conversion into AGRICULTURAL PRODUCE or into ADDITIONAL BIOLOGICAL ASSETS.\n\nCovers: raising livestock, forestry, annual/perennial cropping, cultivating orchards and plantations, floriculture, aquaculture (fish farming).\n\n3 Common features:\n\nI. CAPABILITY TO CHANGE\n   Living animals and plants are capable of biological transformation\n\nII. MANAGEMENT OF CHANGE\n   Management facilitates biological transformation by enhancing or at least stabilising conditions (nutrient levels, moisture, temperature, fertility, light)\n   → This distinguishes agricultural activity from OTHER activities\n\nIII. MEASUREMENT OF CHANGE\n   Change in quality (genetic merit, density, ripeness, fat cover, protein content, fibre strength) or quantity (progeny, weight, cubic metres, fibre length, number of buds) is measured and monitored as a routine management function\n\nNOT agricultural activity:\n✗ Harvesting from UNMANAGED SOURCES (ocean fishing, deforestation)\n✗ Processing AFTER HARVEST (brewing beer, cheese production, wine making)\n✗ Managing recreational animals (zoo)\n✗ Guard/security animals (dogs for security)" },
+
+  { id:4, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Biological Asset & Biological Transformation\n\nDefine: Biological Asset | Biological Transformation\nState and explain the 4 processes of biological transformation.",
+    back:"Biological Asset: A LIVING ANIMAL OR PLANT.\n\nBiological transformation: Comprises the processes of growth, degeneration, production, and procreation that cause QUALITATIVE or QUANTITATIVE changes in a biological asset.\n\n4 Processes:\n\n1. GROWTH\n   An increase in quantity OR improvement in quality of an animal or plant\n   Example: Weight gain in cattle; increase in height of trees\n\n2. DEGENERATION\n   A decrease in quantity OR deterioration in quality of an animal or plant\n   Example: Ageing of livestock beyond productive prime\n\n3. PRODUCTION\n   Of agricultural produce such as latex, tea leaf, wool, and milk\n   Example: Dairy cow producing milk\n\n4. PROCREATION\n   Creation of additional living animals or plants\n   Example: Birth of a calf from a dairy cow → gain recognised immediately in P&L\n\n📌 Unharvested agricultural produce is PART OF THE BIOLOGICAL ASSET until the moment of harvest.\nExample: Milk is part of the dairy cow right up to the moment at which the cow is milked.\n\n📌 Processing after harvest (brewing beer, cheese making) does NOT constitute biological transformation and falls OUTSIDE Ind AS 41." },
+
+  { id:5, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Agricultural Produce & Harvest\n\nDefine: Agricultural Produce | Harvest\n\nHow is agricultural produce treated:\n(a) Before harvest?\n(b) At the point of harvest?\n(c) After harvest?",
+    back:"Agricultural produce: The HARVESTED PRODUCT of the entity's biological assets.\n\nHarvest: The DETACHMENT of produce from a biological asset OR the CESSATION of a biological asset's life processes.\n\nTreatment at 3 stages:\n\n(a) BEFORE HARVEST:\n→ Unharvested produce is part of the BIOLOGICAL ASSET\n→ NOT accounted for separately from the biological asset\n→ Example: Milk is part of the dairy cow until the moment of milking\n\n(b) AT THE POINT OF HARVEST:\n→ Ind AS 41 APPLIES\n→ Measured at FAIR VALUE LESS COSTS TO SELL\n→ This FV less CTS becomes the COST for Ind AS 2 purposes (deemed cost)\n→ Standard states: FV of agricultural produce at harvest can ALWAYS be measured reliably — no exception\n\n(c) AFTER HARVEST:\n→ Ind AS 41 CEASES to apply\n→ Ind AS 2 (Inventories) or another applicable standard applies\n\nExamples:\n| Biological Asset | Agri. Produce | Post-Harvest |\n|---|---|---|\n| Dairy cattle | Milk | Cheese |\n| Sheep | Wool | Yarn, carpet |\n| Grape vines | Picked grapes | Wine |\n| Cotton plants | Harvested cotton | Thread, clothing |" },
+
+  { id:6, standard:"Ind AS 41", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Bearer Plant\n\nDefine bearer plant. State all 3 criteria (ALL must be met).\nWhich standard governs bearer plants? Which governs produce on them?\nWhat is NEVER a bearer plant?",
+    back:"Bearer plant: A LIVING PLANT that:\n(i) Is used in the PRODUCTION OR SUPPLY of agricultural produce\n(ii) Is expected to bear produce for MORE THAN ONE PERIOD\n(iii) Has a REMOTE LIKELIHOOD of being sold as agricultural produce, except for incidental scrap sales\n\n→ ALL THREE criteria must be met simultaneously.\n\nApplicable standards:\n→ BEARER PLANTS themselves → IND AS 16 (PPE)\n→ PRODUCE growing ON bearer plants → IND AS 41\n\nExamples of bearer plants (Ind AS 16):\nTea bushes → tea leaves (Ind AS 41)\nGrape vines → picked grapes (Ind AS 41)\nOil palms → oil palm fruit (Ind AS 41)\nRubber trees → harvested latex (Ind AS 41)\n\nNOT bearer plants:\n❌ Annual crops (maize, wheat, soya) — held solely to be harvested as produce\n❌ Trees grown for lumber — the tree itself is the product\n❌ Dual-use plants — where more than remote likelihood of being sold as agricultural produce itself (e.g. rubber trees sold for both latex AND lumber)\n❌ ANIMALS (sheep, cows etc.) — NEVER bearer plants; always biological assets under Ind AS 41\n\nNote: Root systems of perennial plants (sugar cane, bamboo, asparagus) → typically bearer plants despite appearing consumable." },
+
+  { id:7, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Recognition of Biological Assets\n\nState the 3 conditions for recognising a biological asset or agricultural produce.\nHow is CONTROL over biological assets evidenced?\nWhat happens once a non-current biological asset meets Ind AS 105 criteria?",
+    back:"Recognise a biological asset or agricultural produce WHEN AND ONLY WHEN all 3 conditions are met:\n\n1. CONTROL\n   The entity controls the asset as a result of past events\n   Evidence of control: legal ownership, branding or otherwise marking of cattle on acquisition, birth, or weaning\n\n2. PROBABLE FUTURE ECONOMIC BENEFITS\n   Future economic benefits associated with the asset will probably flow to the entity\n   → Normally assessed by measuring significant physical attributes\n\n3. FAIR VALUE OR COST MEASURABLE RELIABLY\n   The fair value or cost of the asset can be measured reliably\n\n📌 There is a PRESUMPTION that fair value CAN be measured reliably for any biological asset. This presumption can be rebutted only on initial recognition.\n\n📌 Ind AS 105 (Held for Sale):\nOnce a non-current biological asset meets the criteria to be classified as held for sale (or is included in a disposal group classified as HFS), it is PRESUMED that fair value can be measured reliably — no exception allowed." },
+
+  { id:8, standard:"Ind AS 41", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Measurement of Biological Assets\n\nAt what amount are biological assets measured?\nState the EXCEPTION (2 conditions) and the critical rules around it.\nWhen may cost approximate fair value?",
+    back:"General rule:\n→ Measured at FAIR VALUE LESS COSTS TO SELL at:\n   • Initial recognition, AND\n   • End of EACH REPORTING PERIOD\n\nPresumption: Fair value CAN always be measured reliably.\n\nEXCEPTION — use COST MODEL only when BOTH apply:\n(i) Quoted market prices are NOT available for the biological asset, AND\n(ii) Alternative fair value measurements are determined to be CLEARLY UNRELIABLE\n→ Measure at: COST LESS ACCUMULATED DEPRECIATION LESS ACCUMULATED IMPAIRMENT LOSSES\n   (per Ind AS 2, Ind AS 16 and Ind AS 36 as applicable)\n\nCritical rules on the exception:\n→ Presumption can be REBUTTED ONLY ON INITIAL RECOGNITION\n→ Once an entity has measured a biological asset at FV less CTS → must CONTINUE at FV less CTS until disposal (cannot revert to cost later)\n→ Once FV becomes reliably measurable → must switch to FV less CTS model\n\nContract prices:\n→ NOT relevant to FV measurement; FV reflects current market conditions\n→ FV of biological asset NOT adjusted because of existence of a contract\n\nCost may APPROXIMATE FV when:\n(a) Little biological transformation since initial cost incurrence (e.g., fruit tree seedlings planted just before period end; newly acquired livestock)\n(b) Impact of biological transformation on price not expected to be material (e.g., initial growth in a 30-year pine plantation)" },
+
+  { id:9, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:false,
+    front:"Ind AS 41 – Measurement of Agricultural Produce\n\nHow is agricultural produce measured at the point of harvest?\nIs there any exception (like there is for biological assets)?\nHow is land + biological asset combined value split?",
+    back:"Agricultural produce measurement:\n→ Measured at FAIR VALUE LESS COSTS TO SELL at the POINT OF HARVEST\n→ This measurement becomes the COST for Ind AS 2 purposes thereafter (deemed cost)\n\nNo exception applies:\n→ The standard states that fair value of agricultural produce at the point of harvest can ALWAYS be measured reliably\n→ Unlike biological assets, NO cost-model fallback available for agricultural produce\n\nGrouping for FV measurement:\n→ FV measurement may be facilitated by grouping biological assets or agricultural produce by significant attributes (e.g. age, quality)\n→ Entity selects attributes corresponding to those used in the market as the basis for pricing\n\nFair value can change due to:\n→ Both PHYSICAL CHANGES (e.g. ageing, growth) and PRICE CHANGES in the market\n\nLand + Biological Assets combined:\n→ Biological assets often physically attached to land (e.g. trees in a plantation forest)\n→ No separate market may exist for the biological asset alone, but an active market may exist for the COMBINED PACKAGE (biological assets + raw land + land improvements)\n→ Method: Deduct (FV of raw land + FV of land improvements) from combined FV → arrive at FV of biological assets alone" },
+
+  { id:10, standard:"Ind AS 41", category:"Concept", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Gains and Losses\n\nHow are gains and losses from biological assets treated?\nHow are gains and losses from agricultural produce treated?\nGive 2 examples of when a LOSS and a GAIN arise on initial recognition.",
+    back:"BIOLOGICAL ASSETS — Gains and Losses:\n→ Gain or loss on INITIAL RECOGNITION at FV less CTS → P&L in the period it arises\n→ Gain or loss from CHANGE IN FV less CTS at each reporting date → P&L in the period it arises\n\nAGRICULTURAL PRODUCE — Gains and Losses:\n→ Gain or loss on INITIAL RECOGNITION at FV less CTS → P&L in the period it arises\n→ A gain or loss may arise on initial recognition of agricultural produce as a result of HARVESTING\n\nSummary:\n| Source | Occasion | Recognition |\n|---|---|---|\n| Biological asset | Initial recognition | P&L immediately |\n| Biological asset | Change in FV at period end | P&L in period |\n| Agricultural produce | Initial recognition (harvest) | P&L immediately |\n\nLOSS on initial recognition:\n→ Costs to sell are deducted from fair value → FV less CTS < cash paid → loss arises\nExample: Sheep purchased at auction — transport + auctioneer fee deducted → immediate loss\n\nGAIN on initial recognition:\n→ When a new biological asset comes into existence (procreation)\nExample: Calf born during period → FV less CTS of ₹5,000 recognised immediately as INCOME in P&L" },
+
+  { id:11, standard:"Ind AS 41", category:"Concept", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Government Grants\n\nExplain the two tracks for government grant treatment.\nDistinguish: (a) Unconditional vs Conditional grants for FV-model assets.\n(b) What applies when biological asset is measured at cost?",
+    back:"Government grants — 2 tracks based on measurement model:\n\nTRACK 1: Biological Asset measured at FV LESS COSTS TO SELL:\n\n(a) UNCONDITIONAL GRANT:\n→ Recognised in PROFIT OR LOSS when, and only when, the grant becomes RECEIVABLE\n→ NOT spread over useful life (contrast with Ind AS 20)\n\n(b) CONDITIONAL GRANT (including grants requiring entity NOT to engage in specified agricultural activity):\n→ Recognised in PROFIT OR LOSS when, and only when, the CONDITIONS ATTACHING TO THE GRANT ARE MET\n\nExample (conditional): Grant requires farming for 5 years; return entire grant if shorter\n→ Grant recognised only AFTER 5 years pass\nIf proportional retention allowed → recognise proportionately as time passes (e.g. ₹2 crore/year)\n\nTRACK 2: Biological Asset measured at COST (exception applies):\n→ IND AS 20 applies (standard government grant accounting)\n→ Two acceptable methods:\n   (i) Deferred income → recognised in P&L systematically over useful life of asset, OR\n   (ii) Deduct from carrying amount → recognised as reduced depreciation expense\n\nGrant for BEARER PLANTS:\n→ Bearer plants are outside Ind AS 41 → Ind AS 20 applies\n\n📌 KEY DISTINCTION: Unconditional grants under Ind AS 41 go to P&L IMMEDIATELY when receivable — NOT deferred over useful life as under Ind AS 20." },
+
+  // ── THEORY Q&A ────────────────────────────────────────
+  { id:12, standard:"Ind AS 41", category:"Theory Q&A", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Scope: Vines, Grapes & Wine\n[Illustration 1 – ABC Ltd]\n\nABC Ltd grows vines, harvests the grapes and produces wine.\n\nIdentify which activity falls under which standard, with reasons.",
+    back:"1. GRAPE VINES (growing):\n→ Grape vines are BEARER PLANTS — used to produce crops of grapes over multiple periods\n→ Bearer plants → IND AS 16 (PPE) — outside Ind AS 41 scope\n→ However, PRODUCE growing on them (unripe grapes on vine) → IND AS 41\n\n2. HARVESTED GRAPES:\n→ At the point of harvest, biological transformation CEASES\n→ Grapes become AGRICULTURAL PRODUCE covered by IND AS 41\n→ Measured at FV less CTS at harvest → this FV less CTS becomes COST for Ind AS 2\n\n3. WINE PRODUCTION:\n→ Wine involves a lengthy maturation period\n→ This process is similar to CONVERSION OF RAW MATERIALS TO FINISHED PRODUCT — not biological transformation\n→ Even though it may be a logical extension of agricultural activity, it does NOT meet the definition of agricultural activity\n→ IND AS 2 (Inventories) applies\n\nSummary:\n| Activity | Standard | Reason |\n|---|---|---|\n| Grape vines | Ind AS 16 | Bearer plant |\n| Harvested grapes | Ind AS 41 | Agricultural produce at harvest |\n| Wine production | Ind AS 2 | Post-harvest processing |\n\n📌 Post-harvest processing is NEVER agricultural activity under Ind AS 41." },
+
+  { id:13, standard:"Ind AS 41", category:"Theory Q&A", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Activity Classification\n[Test Your Knowledge Q5]\n\nAnalyse whether each falls within scope of Ind AS 41:\n(a) Zoo management  (b) Ocean fishing\n(c) Fish farming  (d) Growing plants for drugs\n(e) Guard dogs for security  (f) Development of cells/bacteria/viruses",
+    back:"(a) ZOO MANAGEMENT → NOT Ind AS 41\nPrimary purpose is showing animals to public for recreation — no management of biological transformation for sale or produce. Not agricultural activity.\n\n(b) OCEAN FISHING → NOT Ind AS 41\nHarvesting biological assets from UNMANAGED SOURCES. Fish grow naturally — no management of biological transformation. Not agricultural activity.\n\n(c) FISH FARMING → YES — IND AS 41\nManaging growth of fish + harvesting for sale = management of biological transformation of biological assets for sale. Agricultural activity.\n\n(d) GROWING PLANTS FOR DRUGS → YES — IND AS 41\nPlants grown for use in drug production = agricultural activity → within scope.\n\n(e) GUARD DOGS (security) → NOT Ind AS 41\nNot kept for sale, not for conversion into agricultural produce, not for generation of additional biological assets. No agricultural activity.\n\n(f) CELLS/BACTERIA/VIRUSES → Depends on PURPOSE:\n→ For RESEARCH purposes only → NOT Ind AS 41 (not developed for sale or conversion into agricultural produce)\n→ For SALE or use in dairy products → YES — IND AS 41\n\n📌 Two-part test:\n(1) Is there management of biological transformation?\n(2) Is it for sale, agricultural produce, or additional biological assets?\nBoth must be satisfied." },
+
+  { id:14, standard:"Ind AS 41", category:"Theory Q&A", difficulty:"Intermediate", exam:false,
+    front:"Ind AS 41 – Bearer Plant vs Produce: Key Distinctions\n\nWhy are bearer plants treated under Ind AS 16 rather than Ind AS 41?\nWhat is the treatment of produce ON bearer plants?\nAre animals ever classified as bearer plants?",
+    back:"Bearer plants excluded from Ind AS 41 because:\n→ They function like MANUFACTURING EQUIPMENT — used over multiple periods to produce agricultural output\n→ They do NOT themselves constitute agricultural produce to be sold\n→ Their carrying amount is recovered through CONTINUING USE (producing crops), not through sale of the plant itself\n→ Therefore: depreciated over useful life under Ind AS 16\n\nProduce ON bearer plants:\n→ IS a biological asset within scope of IND AS 41\n→ Examples:\n   • Tea leaves on tea bushes → Ind AS 41\n   • Grapes on grape vines → Ind AS 41\n   • Latex on rubber trees → Ind AS 41\n   • Oil palm fruit → Ind AS 41\n\nAnimals — NEVER bearer plants:\n→ Definition of bearer plant explicitly covers only PLANTS\n→ Sheep, cows — biological assets under Ind AS 41, even if they produce agricultural produce over multiple periods\n→ Example: Dairy cow produces milk for many years but is still a biological asset, NOT a bearer plant\n\nDual-use plants → NOT bearer plants:\n→ If a plant is cultivated for agricultural produce AND there is MORE THAN REMOTE likelihood of being sold as agricultural produce itself → not a bearer plant\n→ Example: Rubber trees sold for both latex AND lumber — may not qualify as bearer plant" },
+
+  { id:15, standard:"Ind AS 41", category:"Theory Q&A", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Government Grants: Agro Foods Ltd\n[Illustration 4]\n\nAgro Foods Ltd received a government grant to set up a poultry unit, used to buy:\n(a) Broiler birds (measured at FV less CTS) — NO conditions attached\n(b) Incubator machine (Ind AS 16 asset) — condition: used for minimum 3 years\n\nAdvise the accounting treatment under Ind AS 41 and Ind AS 20.",
+    back:"(a) BROILER BIRDS — biological asset at FV less CTS:\n→ No conditions attached → UNCONDITIONAL grant\n→ Per Ind AS 41: Recognise in PROFIT OR LOSS when grant becomes RECEIVABLE\n→ Grant received with no future conditions → recognise in P&L in the PERIOD IN WHICH IT IS RECEIVED\n\n(b) INCUBATOR MACHINE — Ind AS 16 asset (NOT a biological asset):\n→ Plant and machinery used to develop/maintain biological assets → covered by Ind AS 16\n→ Does NOT qualify as biological asset under Ind AS 41\n→ Ind AS 41 government grant provisions DO NOT apply\n→ IND AS 20 APPLIES\n\nUnder Ind AS 20, two acceptable methods:\nMethod 1: Recognise grant as DEFERRED INCOME → recognised in P&L on systematic basis over useful life (3 years)\nMethod 2: DEDUCT from carrying amount of asset → recognised in P&L over 3 years as reduced depreciation expense\n\nConclusion for incubator:\n→ Since condition = use for minimum 3 years (= useful life), grant spread over 3 years under either method\n→ Either method gives same timing of recognition over the 3-year life\n\n📌 Key distinction:\n• Biological asset grants (FV model) → Ind AS 41 (immediate P&L when receivable/conditions met)\n• Non-biological asset grants + cost-model biological asset grants → Ind AS 20 (deferred or reduced carrying amount)" },
+
+  // ── FORMULA ───────────────────────────────────────────
+  { id:16, standard:"Ind AS 41", category:"Formula", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Formula Card: Price Change vs Physical Change\n[Illustration 2]\n\nA farmer owns 250 dairy cattle (3-year old) at 1 April 20X1, total FV = ₹13,750.\nFV of 3-year cattle at 31 March 20X2 = ₹60/cattle\nFV of 4-year cattle at 31 March 20X2 = ₹75/cattle\n\n(1) State the formula for Price Change and Physical Change\n(2) Calculate both; state total FV at 31 March 20X2\n(3) Pass the journal entry",
+    back:"Opening FV per cattle = ₹13,750 ÷ 250 = ₹55/cattle\n\nFormulas:\nPRICE CHANGE = Units × (FV at SAME AGE at new price − FV at same age at old price)\n= 250 × (₹60 − ₹55) = 250 × ₹5 = ₹1,250\n[Price changed; cattle still 3 years old → same age, new market rate]\n\nPHYSICAL CHANGE = Units × (FV at NEW AGE − FV at same age at new prices)\n= 250 × (₹75 − ₹60) = 250 × ₹15 = ₹3,750\n[Cattle aged from 3 years to 4 years → physical growth using new prices]\n\nCalculation:\nFV at 1 April 20X1:                                    ₹13,750\nIncrease due to Price change [250 × (60 − 55)]:         ₹1,250\nIncrease due to Physical change [250 × (75 − 60)]:      ₹3,750\nFV at 31 March 20X2:                                   ₹18,750\n\nJournal Entry (31 March 20X2):\nBiological Asset (Cattle A/c)       Dr.  ₹5,000\n   To Gain – Change in value (P/L)          ₹5,000\n(Being change in value of cattle recognised at end of reporting period)\n\n📌 Price change = SAME age, rate changed\n📌 Physical change = animal AGED (matured), using new market rates at the new age\n📌 Total gain of ₹5,000 → recognised entirely in P&L" },
+
+  { id:17, standard:"Ind AS 41", category:"Formula", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Formula Card: Initial Recognition & Remeasurement\n[Illustration 3]\n\nXYZ Ltd purchased 100 sheep on 1 December 20X3 for ₹5,00,000.\nTransaction cost (paid by seller): 2% of market price = ₹10,000.\nSheep's FV increased to ₹6,00,000 on 31 March 20X4.\nTransaction cost to sell at 31 March 20X4: 2% (paid by seller).\n\nCalculate FV less CTS on purchase date and on 31 March 20X4. Pass journal entries.",
+    back:"INITIAL RECOGNITION (1 December 20X3):\nFV = ₹5,00,000\nLess: Costs to sell = 2% × ₹5,00,000 = ₹10,000\nFV less CTS = ₹4,90,000\nLoss on initial recognition = ₹10,000 → P&L\n\nJournal Entry (1 December 20X3):\nBiological Asset (Sheep)     Dr.   4,90,000\nLoss on initial recognition  Dr.     10,000\n   To Bank                           5,00,000\n(Being biological asset purchased at FV less CTS)\n\nREMEASUREMENT (31 March 20X4):\nFV = ₹6,00,000\nLess: Costs to sell = 2% × ₹6,00,000 = ₹12,000\nFV less CTS = ₹5,88,000\nGain = ₹5,88,000 − ₹4,90,000 = ₹98,000 → P&L\n\nJournal Entry (31 March 20X4):\nBiological Asset (Sheep)             Dr.  98,000\n   To Gain – Change in fair value            98,000\n(Being change in fair value recognised at end of reporting period)\n\n📌 Costs to sell are ALWAYS deducted from FV regardless of WHO bears them\n📌 Costs to sell include: brokers' and dealers' commissions, auctioneer fees, transfer taxes, transport costs to sale point\n📌 Costs to sell EXCLUDE: finance costs and income taxes" },
+
+  // ── QUICK FIRE ───────────────────────────────────────
+  { id:18, standard:"Ind AS 41", category:"Quick Fire", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Quick Fire\n\n1. Biological assets measured at: ___\n2. Agricultural produce at point of harvest measured at: ___\n3. Bearer plants accounted under: ___\n4. FV exception for biological assets can be applied at: ___\n5. Ocean fishing is / is not agricultural activity because: ___\n6. Gain on birth of a calf → recognised: ___\n7. Post-harvest produce → governed by: ___",
+    back:"1. FAIR VALUE LESS COSTS TO SELL (at initial recognition and at each reporting period end)\n\n2. FAIR VALUE LESS COSTS TO SELL at point of harvest — this becomes the COST for Ind AS 2\n\n3. IND AS 16 (Property, Plant and Equipment) — bearer plants are like manufacturing equipment\n\n4. INITIAL RECOGNITION ONLY — once FV model used, must continue until disposal\n   (Presumption of reliable FV can be rebutted ONLY on initial recognition)\n\n5. NOT agricultural activity — ocean fishing is harvesting from UNMANAGED SOURCES; fish grow naturally with no management of biological transformation\n\n6. IMMEDIATELY in P&L in the period of birth — gain on initial recognition of new biological asset (procreation)\n\n7. IND AS 2 (Inventories) or another applicable standard\n\nBonus:\n→ Animals are NEVER bearer plants\n→ Unconditional government grant (FV model asset) → P&L when RECEIVABLE\n→ Conditional government grant (FV model asset) → P&L when CONDITIONS MET\n→ Government grant for cost-model biological asset → IND AS 20\n→ FV of agricultural produce at harvest: can ALWAYS be measured reliably (no exception)" },
+
+  { id:19, standard:"Ind AS 41", category:"Quick Fire", difficulty:"Basic", exam:false,
+    front:"Ind AS 41 – Quick Fire: True or False\n\n1. Ind AS 41 applies to wine production from harvested grapes.\n2. Produce growing on bearer plants is a biological asset.\n3. The cost model exception for biological assets can be applied at any time.\n4. Fair value of agricultural produce at harvest may sometimes not be reliably measurable.\n5. Contract prices are relevant in measuring FV of biological assets.\n6. Fish farming is agricultural activity.\n7. A loss may arise on initial recognition of a biological asset.",
+    back:"1. FALSE\nWine production is post-harvest processing → Ind AS 2 applies. Not biological transformation.\n\n2. TRUE\nProduce growing on bearer plants = biological asset → Ind AS 41 applies to it.\n\n3. FALSE\nCost model exception can be rebutted ONLY ON INITIAL RECOGNITION.\nOnce FV model used → must continue until disposal. Cannot switch back to cost later.\n\n4. FALSE\nThe standard explicitly states FV of agricultural produce at the POINT OF HARVEST can ALWAYS be measured reliably. No exception is available for agricultural produce.\n\n5. FALSE\nContract prices are NOT necessarily relevant. FV reflects CURRENT MARKET CONDITIONS between market participants. FV is NOT adjusted because of the existence of a contract.\n\n6. TRUE\nFish farming = management of biological transformation (growth of fish) for sale → agricultural activity within scope of Ind AS 41.\n\n7. TRUE\nCosts to sell are deducted from FV → FV less CTS may be LESS than the cash paid.\nExample: Sheep purchased at auction — transport cost + auctioneer fee deducted → loss on initial recognition." },
+
+  { id:20, standard:"Ind AS 41", category:"Quick Fire", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Quick Fire: Government Grants\n\n1. Unconditional grant + FV-model biological asset → recognise: ___\n2. Conditional grant + FV-model biological asset → recognise: ___\n3. Grant for cost-model biological asset → apply: ___\n4. Grant related to bearer plants → apply: ___\n5. Under Ind AS 20, two methods for asset-related grants: ___",
+    back:"1. UNCONDITIONAL grant + FV model:\n→ Recognise in P&L when grant becomes RECEIVABLE\n→ Immediate recognition — not deferred\n\n2. CONDITIONAL grant + FV model:\n→ Recognise in P&L when CONDITIONS ATTACHING TO THE GRANT ARE MET\n→ Includes grants requiring entity NOT to engage in specified agricultural activity\n→ If all-or-nothing condition: full grant only after full period elapses\n→ If proportional retention allowed: recognise proportionately as time passes\n\n3. Grant for COST-MODEL biological asset:\n→ Apply IND AS 20 (standard government grant accounting)\n\n4. Grant related to BEARER PLANTS:\n→ Apply IND AS 20 (bearer plants are outside Ind AS 41 scope → Ind AS 16 + Ind AS 20)\n\n5. Under Ind AS 20, two acceptable methods:\n   (i) Deferred income → recognised in P&L systematically over useful life of asset\n   (ii) Deduct grant from carrying amount of asset → recognised as reduced depreciation expense\n\n📌 Ind AS 41 vs Ind AS 20 key contrast:\n→ Ind AS 41: immediate P&L when receivable (unconditional)\n→ Ind AS 20: deferred over useful life OR netted against asset" },
+
+  // ── PRACTICAL ─────────────────────────────────────────
+  { id:21, standard:"Ind AS 41", category:"Practical", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Practical: Moon Ltd – Part 1\n[Illustration 5]\n\n1 April 20X1 transactions:\n• 200 dairy cows (2-yr old) purchased for ₹10,00,000\n• Unconditional government grant received: ₹10,00,000 (for cows)\n• Land purchased: ₹50,00,000\n\nFV per cow: 2-yr @ 1 Apr = ₹5,000; 3-yr @ 31 Mar 20X2 = ₹5,500\nMaintenance: ₹6,00,000 | Breeding fee: ₹4,00,000\n\nCalculate treatment of (a) Land (b) Cows at 31 March 20X2 (c) Government grant",
+    back:"(a) LAND:\n→ Land is NOT covered by Ind AS 41 → Ind AS 16 applies\n→ Under Cost Model: recorded at cost ₹50,00,000\n→ No depreciation (land has infinite useful life)\n→ Balance sheet: PPE – Land = ₹50,00,000\n\n(b) DAIRY COWS at 31 March 20X2 (now 3-year old):\nFV at 31 March 20X2 = 200 × ₹5,500 = ₹11,00,000\n\nPrice change: 200 × (₹5,200 − ₹5,000) = ₹40,000\n[3-yr cow at new rate vs opening rate]\nPhysical change: 200 × (₹5,500 − ₹5,200) = ₹60,000\n[aged from 2-yr to 3-yr, using new rates]\nTotal gain = ₹1,00,000 → recognised in P&L\n\nBalance sheet: Biological assets (Dairy cows) = ₹11,00,000\n\n(c) GOVERNMENT GRANT:\n→ Unconditional grant related to biological asset measured at FV less CTS\n→ Ind AS 41 applies: Recognised in P&L when RECEIVABLE\n→ ₹10,00,000 credited to INCOME immediately on 1 April 20X1\n→ NOT spread over useful life of herd (contrast with Ind AS 20)\n\nNote: Maintenance costs (₹6,00,000) and breeding fees (₹4,00,000) are EXPENSED to P&L — they are costs incurred to generate the biological transformation, not to be capitalised" },
+
+  { id:22, standard:"Ind AS 41", category:"Practical", difficulty:"Intermediate", exam:true,
+    front:"Ind AS 41 – Practical: Moon Ltd – Part 2\n[Illustration 5]\n\n1 October 20X1: 100 calves born\nFV less CTS per calf:\n• Newborn @ 1 Oct 20X1 = ₹1,100\n• 6-month old @ 31 Mar 20X2 = ₹1,300\n\n31 March 20X2: 3,000 litres unsold milk\nFV of milk = ₹24/litre\n\nCalculate: (a) Calves – BS & P&L (b) Milk in inventory (c) Full P&L and BS extract",
+    back:"(a) CALVES:\n→ Born 1 Oct 20X1 → BIOLOGICAL ASSETS → FV less CTS at birth:\n   100 × ₹1,100 = ₹1,10,000 (gain on procreation → P&L immediately)\n→ By 31 March 20X2: 6-month old → FV = 100 × ₹1,300 = ₹1,30,000\n→ Balance sheet: Calves = ₹1,30,000\n→ Total change in FV of calves credited to P&L = ₹1,30,000\n\n(b) MILK:\n→ Agricultural produce → measured at FV less CTS at point of harvest\n→ 3,000 × ₹24 = ₹72,000\n→ Balance sheet: Inventory (milk) = ₹72,000\n→ This FV less CTS = COST for Ind AS 2 purposes\n\n(c) Statement of P&L extract:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nIncome:\n  Change in FV – Dairy cows:         ₹1,00,000\n  Government grant:                 ₹10,00,000\n  Change in FV – Calves:             ₹1,30,000\n  Fair value of milk:                  ₹72,000\n  Total income:                     ₹13,02,000\nExpenses:\n  Maintenance costs:                 ₹6,00,000\n  Breeding fees:                     ₹4,00,000\n  Total expenses:                   ₹10,00,000\n  Net income:                        ₹3,02,000\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nBalance Sheet extract:\n  PPE – Land:                       ₹50,00,000\n  Biological assets – Dairy cows:   ₹11,00,000\n  Biological assets – Calves:        ₹1,30,000\n  Inventory – Milk:                    ₹72,000" },
+
+  { id:23, standard:"Ind AS 41", category:"Practical", difficulty:"Basic", exam:true,
+    front:"Ind AS 41 – Practical: Cattle Auction\n[Test Your Knowledge Q1]\n\nEntity A purchased cattle at auction on 30 June 20X1:\n• Purchase price: ₹1,00,000\n• Transport to farm (paid by buyer): ₹1,000\n• Auctioneer fee (2% of purchase price, paid by buyer): ₹2,000\n\n31 March 20X2: Sales price = ₹1,10,000\nTo sell at auction: Transport ₹1,000 + auctioneer fee 2% of selling price\n\nCalculate initial recognition value and year-end value. Pass journal entries.",
+    back:"INITIAL RECOGNITION (30 June 20X1):\nFV less costs to sell:\n   FV = ₹1,00,000\n   Less: Transport (cost to sell) = (₹1,000)\n   Less: Auctioneer fee 2% × ₹1,00,000 = (₹2,000)\n   FV less CTS = ₹97,000\n\nCash outflow (purchase + transport + auctioneer) = ₹1,03,000\nLoss on initial recognition = ₹1,03,000 − ₹97,000 = ₹6,000 → P&L\n\nJournal Entry (30 June 20X1):\nBiological Asset (Cattle)     Dr.  97,000\nLoss on initial recognition   Dr.   6,000\n   To Bank                         1,03,000\n\nYEAR-END MEASUREMENT (31 March 20X2):\nFV less costs to sell:\n   FV = ₹1,10,000\n   Less: Transport = (₹1,000)\n   Less: Auctioneer fee 2% × ₹1,10,000 = (₹2,200)\n   FV less CTS = ₹1,06,800\n\nGain = ₹1,06,800 − ₹97,000 = ₹9,800 → P&L\n\nJournal Entry (31 March 20X2):\nBiological Asset (Cattle)          Dr.  9,800\n   To Gain on remeasurement (P&L)         9,800\n\n📌 Costs to sell are deducted from FV regardless of who actually bears them\n📌 At year-end, deduct SELLING costs (transport to auction + auctioneer fee on sales price)" },
+
+  { id:24, standard:"Ind AS 41", category:"Practical", difficulty:"Basic", exam:false,
+    front:"Ind AS 41 – Practical: Conditional Government Grant\n[Example 4 – Sun Ltd]\n\nSun Ltd cultivated land. Government offers ₹10 crore grant, condition: cultivate for 5 years. If shorter, ENTIRE grant must be returned.\n\n(a) When is the grant recognised?\n(b) What if the terms allowed PROPORTIONAL retention based on time elapsed?",
+    back:"(a) ALL-OR-NOTHING CONDITION:\n→ Condition: cultivate for FULL 5 years; return ENTIRE grant if shorter\n→ This is a CONDITIONAL grant related to a biological asset (FV model applies)\n→ Grant is NOT recognised until the CONDITION IS FULLY MET\n→ Recognition: AFTER 5 YEARS of cultivation (₹10 crore in P&L at end of Year 5)\n→ NO income recognised in Years 1 through 4\n\n(b) PROPORTIONAL RETENTION:\n→ If terms allow entity to retain the grant proportional to time elapsed:\n→ Recognise proportionately as time passes\n→ ₹10 crore ÷ 5 years = ₹2 crore per annum\n→ Recognised: ₹2 crore in P&L each year for 5 years\n\nKey principle:\n→ Conditional grants → recognised in P&L only when CONDITIONS ARE MET\n→ If conditions allow proportional satisfaction → recognise proportionately\n\n📌 Contrast with unconditional grants:\n→ Unconditional → recognised IMMEDIATELY when RECEIVABLE\n\n📌 Grants requiring entity NOT TO ENGAGE in specified agricultural activity:\n→ Same rule: recognise in P&L only when conditions are met\n\n📌 If grant relates to cost-model biological asset or bearer plant:\n→ Ind AS 20 applies instead (deferred income or deduction from carrying amount)" },
+];
+
+const STANDARDS  = ["All","Ind AS 41"];
+const CATEGORIES = ["All","Concept","Formula","Theory Q&A","Quick Fire","Practical"];
+const CAT_COLORS  = { Concept:"#3B82F6", Formula:"#8B5CF6", Practical:"#F59E0B", "Theory Q&A":"#10B981", "Quick Fire":"#EF4444" };
+const STD_COLORS  = { "Ind AS 41":"#10B981" };
+const DIFF_COLORS = { Basic:"#22C55E", Intermediate:"#F59E0B", Advanced:"#EF4444" };
+
+const S = {
+  page: { minHeight:"100dvh", background:"#0A0F1E", display:"flex", flexDirection:"column", alignItems:"center", maxWidth:430, margin:"0 auto", overflowX:"hidden", paddingTop:"env(safe-area-inset-top,0px)" },
+  homeWrap: { width:"100%", padding:"20px 20px 40px", display:"flex", flexDirection:"column", alignItems:"center", paddingBottom:"calc(40px + env(safe-area-inset-bottom,0px))" },
+  header: { width:"100%", background:"linear-gradient(135deg,#064e3b 0%,#0f172a 100%)", borderRadius:20, padding:"24px 20px 20px", textAlign:"center", border:"1px solid #065f46", marginBottom:20 },
+  badge: { background:"#065f46", color:"#6ee7b7", fontSize:10, fontFamily:"Arial,sans-serif", letterSpacing:2, padding:"4px 12px", borderRadius:20, display:"inline-block", marginBottom:10 },
+  title: { color:"#fff", fontSize:26, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
+  subtitle: { color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", marginBottom:18 },
+  statsRow: { display:"flex", gap:10, justifyContent:"center" },
+  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", marginBottom:14 },
+  catCard: { background:"#0f172a", border:"1.5px solid", borderRadius:14, padding:"14px 12px", textAlign:"left", cursor:"pointer", display:"flex", flexDirection:"column", gap:4, WebkitAppearance:"none" },
+  catDot: { width:8, height:8, borderRadius:"50%", marginBottom:4 },
+  catName: { color:"#e2e8f0", fontSize:13, fontWeight:600, fontFamily:"Arial,sans-serif" },
+  catCnt: { color:"#64748b", fontSize:12, fontFamily:"Arial,sans-serif" },
+  mainBtn: { width:"100%", background:"linear-gradient(135deg,#059669,#10b981)", color:"#fff", border:"none", borderRadius:14, padding:"15px", fontSize:15, fontWeight:700, fontFamily:"Arial,sans-serif", cursor:"pointer", letterSpacing:0.5, marginTop:8, WebkitAppearance:"none" },
+  outlineBtn: { background:"transparent", border:"1.5px solid #10b981", color:"#34d399" },
+  statsBtn: { background:"transparent", border:"1.5px solid #475569", color:"#94a3b8" },
+  backBtn: { color:"#94a3b8", background:"none", border:"none", fontSize:15, cursor:"pointer", alignSelf:"flex-start", fontFamily:"Arial,sans-serif", padding:"8px 0", marginBottom:8 },
+  statsDetail: { display:"flex", gap:12, marginTop:8, marginBottom:14, width:"100%" },
+  statBlock: { flex:1, background:"#0f172a", borderRadius:16, padding:"16px 10px", textAlign:"center" },
+  bigNum: { fontSize:32, fontWeight:700 },
+  bigLbl: { color:"#94a3b8", fontSize:12, fontFamily:"Arial,sans-serif", marginTop:4 },
+  pBarWrap: { width:"100%", height:8, background:"#1e293b", borderRadius:4, overflow:"hidden" },
+  topBar: { width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px 8px", background:"#0A0F1E", position:"sticky", top:0, zIndex:10, flexShrink:0 },
+  iconBtn: { background:"#1e293b", border:"none", borderRadius:10, width:38, height:38, fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", WebkitAppearance:"none" },
+  diffBadge: { fontSize:10, color:"#000", padding:"2px 8px", borderRadius:10, fontWeight:700, fontFamily:"Arial,sans-serif" },
+  pill: { border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontFamily:"Arial,sans-serif", cursor:"pointer", whiteSpace:"nowrap", fontWeight:600, flexShrink:0, WebkitAppearance:"none" },
+  pTrack: { width:"calc(100% - 40px)", height:3, background:"#1e293b", borderRadius:2, overflow:"hidden", margin:"0 20px 10px", flexShrink:0 },
+  pFill: { height:"100%", background:"linear-gradient(90deg,#059669,#10b981)", borderRadius:2, transition:"width 0.3s" },
+  pBarFill: { height:"100%", borderRadius:4, transition:"width 0.4s" },
+  catTag: { fontSize:11, color:"#fff", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:10, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:0.5, flexShrink:0 },
+  examTag: { fontSize:11, color:"#fbbf24", background:"#1c1200", border:"1px solid #d97706", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  stdTag: { fontSize:10, color:"#6ee7b7", background:"rgba(16,185,129,0.15)", border:"1px solid #065f46", padding:"2px 8px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  question: { color:"#e2e8f0", fontSize:15, lineHeight:1.6, flex:1, display:"flex", alignItems:"flex-start", whiteSpace:"pre-line", fontFamily:"Georgia,serif" },
+  answer: { color:"#d1fae5", fontSize:12.5, lineHeight:1.75, whiteSpace:"pre-line", fontFamily:"Arial,sans-serif", flex:1 },
+  actionRow: { display:"flex", gap:12, width:"calc(100% - 40px)", margin:"10px 0 4px", flexShrink:0 },
+  noBtn: { flex:1, background:"#1c0a0a", border:"1.5px solid #EF4444", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  yesBtn: { flex:1, background:"#0a1c0a", border:"1.5px solid #22C55E", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  navRow: { display:"flex", alignItems:"center", justifyContent:"space-between", width:"calc(100% - 40px)", margin:"8px 0 4px", gap:8, flexShrink:0 },
+  navBtn: { background:"#1e293b", color:"#94a3b8", border:"none", borderRadius:10, padding:"10px 16px", fontSize:14, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, WebkitAppearance:"none" },
+  shuffleBtn: { background:"#1e293b", color:"#6ee7b7", border:"1px solid #065f46", borderRadius:10, padding:"10px 14px", fontSize:12, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, flex:1, WebkitAppearance:"none" },
+  emptyState: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 20px", width:"100%" },
+  revealBtn: { width:"100%", padding:"12px", borderRadius:12, border:"1px solid #065f46", background:"rgba(16,185,129,0.1)", color:"#6ee7b7", fontSize:13, fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:"0.5px", cursor:"pointer" },
+};
+
+function Pill({ num, lbl }) {
+  return (
+    <div style={{ background:"#1e293b", borderRadius:12, padding:"8px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+      <span style={{color:"#6ee7b7",fontSize:20,fontWeight:700}}>{num}</span>
+      <span style={{color:"#64748b",fontSize:11,fontFamily:"Arial,sans-serif"}}>{lbl}</span>
+    </div>
+  );
+}
+
+function App() {
+  const saved = loadProgress();
+  const [page, setPage]         = useState("home");
+  const [selCat, setSelCat]     = useState("All");
+  const [examOnly, setExamOnly] = useState(false);
+  const [deck, setDeck]         = useState(cards);
+  const [idx, setIdx]           = useState(0);
+  const [flipped, setFlipped]   = useState(false);
+  const [known, setKnown]       = useState(() => new Set(saved.known));
+  const [unknown, setUnknown]   = useState(() => new Set(saved.unknown));
+  const [shuffled, setShuffled] = useState(false);
+  const [toast, setToast]       = useState("");
+  const touchX = useRef(null);
+  const touchY = useRef(null);
+
+  useEffect(() => {
+    let f = cards;
+    if (selCat !== "All") f = f.filter(c => c.category === selCat);
+    if (examOnly) f = f.filter(c => c.exam);
+    if (shuffled) f = [...f].sort(() => Math.random() - 0.5);
+    setDeck(f); setIdx(0); setFlipped(false);
+  }, [selCat, examOnly, shuffled]);
+
+  useEffect(() => { saveProgress(known, unknown); }, [known, unknown]);
+
+  const cur = deck[idx] || null;
+  const progress = deck.length ? Math.round((idx / deck.length) * 100) : 0;
+
+  const go = (dir) => {
+    setFlipped(false);
+    setTimeout(() => {
+      setIdx(i => { if (dir===1 && i<deck.length-1) return i+1; if (dir===-1 && i>0) return i-1; return i; });
+    }, 80);
+  };
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
+  const handleSave = () => { saveProgress(known, unknown); showToast("Progress saved!"); };
+  const mark = (type) => {
+    if (!cur) return;
+    if (type === "know") {
+      setKnown(s => new Set([...s, cur.id]));
+      setUnknown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    } else {
+      setUnknown(s => new Set([...s, cur.id]));
+      setKnown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    }
+    go(1);
+  };
+
+  const startStudy = (cat, examOnlyMode) => {
+    setSelCat(cat || "All");
+    setExamOnly(examOnlyMode || false);
+    setShuffled(false); setIdx(0); setFlipped(false);
+    setPage("study");
+  };
+
+  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; touchY.current = e.touches[0].clientY; };
+  const onTouchEnd   = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    touchX.current = null;
+    if (Math.abs(dx) < 50 || dy > Math.abs(dx) * 0.6) return;
+    if (dx < 0) go(1); else go(-1);
+  };
+
+  // ── HOME ────────────────────────────────────────────
+  if (page === "home") return (
+    <div style={S.page}>
+      <div style={S.homeWrap}>
+        <div style={S.header}>
+          <div style={S.badge}>CA FINALS · GROUP I · FR</div>
+          <div style={S.title}>Ind AS 41</div>
+          <div style={S.subtitle}>Agriculture · Biological Assets · Fair Value Model</div>
+          <div style={S.statsRow}>
+            <Pill num={cards.length} lbl="Cards"/>
+            <Pill num={5} lbl="Categories"/>
+            <Pill num={cards.filter(c=>c.exam).length} lbl="Exam Qs"/>
+          </div>
+        </div>
+
+        {/* Category grid */}
+        <div style={S.grid}>
+          {CATEGORIES.filter(c=>c!=="All").map(c => (
+            <button key={c} style={{...S.catCard, borderColor:CAT_COLORS[c]}}
+              onClick={() => startStudy(c, false)}>
+              <div style={{...S.catDot, background:CAT_COLORS[c]}}/>
+              <div style={S.catName}>{c}</div>
+              <div style={S.catCnt}>{cards.filter(x=>x.category===c).length} cards</div>
+            </button>
+          ))}
+        </div>
+
+        <button style={S.mainBtn} onClick={() => startStudy("All", false)}>
+          Study All {cards.length} Cards →
+        </button>
+        <button style={{...S.mainBtn, ...S.outlineBtn}} onClick={() => startStudy("All", true)}>
+          ⚡ Exam Questions Only
+        </button>
+        <button style={{...S.mainBtn, ...S.statsBtn}} onClick={() => setPage("stats")}>
+          📊 View Progress
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── STATS ───────────────────────────────────────────
+  if (page === "stats") {
+    const pct = Math.round(known.size / (cards.length || 1) * 100);
+    return (
+      <div style={S.page}>
+        <div style={S.homeWrap}>
+          <button style={S.backBtn} onClick={() => setPage("home")}>← Back</button>
+          <div style={{...S.title, marginBottom:24}}>Your Progress</div>
+          <div style={S.statsDetail}>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#22C55E"}}>{known.size}</div><div style={S.bigLbl}>✅ Know It</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#EF4444"}}>{unknown.size}</div><div style={S.bigLbl}>🔁 Review</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#64748b"}}>{cards.length - known.size - unknown.size}</div><div style={S.bigLbl}>⏳ Unseen</div></div>
+          </div>
+          <div style={S.pBarWrap}>
+            <div style={{...S.pBarFill, width:`${pct}%`, background:"linear-gradient(90deg,#059669,#34d399)"}}/>
+          </div>
+          <div style={{color:"#94a3b8", textAlign:"center", fontSize:13, marginTop:8, fontFamily:"Arial,sans-serif", marginBottom:24}}>
+            {pct}% mastered · Progress saved across sessions
+          </div>
+          {unknown.size > 0 && (
+            <button style={{...S.mainBtn, marginTop:8}} onClick={() => {
+              const ids = new Set([...unknown]);
+              const reviewDeck = cards.filter(c => ids.has(c.id));
+              setDeck(reviewDeck); setIdx(0); setFlipped(false); setPage("study");
+            }}>🔁 Review Weak Cards ({unknown.size})</button>
+          )}
+          <button style={{...S.mainBtn, ...S.outlineBtn, marginTop:10}} onClick={() => { if(window.confirm('Reset all progress?')) { setKnown(new Set()); setUnknown(new Set()); }}}>
+            Reset Progress
+          </button>
+          <button style={{...S.mainBtn, background:"linear-gradient(135deg,#059669,#10b981)", marginTop:10}} onClick={handleSave}>
+            💾 Save Progress Now
+          </button>
+          <button style={{...S.mainBtn, ...S.statsBtn, marginTop:10}} onClick={() => setPage("home")}>
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STUDY ───────────────────────────────────────────
+  return (
+    <div style={S.page} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div style={S.topBar}>
+        <button style={S.iconBtn} onClick={() => { setExamOnly(false); setPage("home"); }}>🏠</button>
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
+          <div style={{color:"#e2e8f0", fontSize:14, fontWeight:600, fontFamily:"Arial,sans-serif"}}>{idx+1} / {deck.length}</div>
+          {cur && <div style={{...S.diffBadge, background:DIFF_COLORS[cur.difficulty]||"#666"}}>{cur.difficulty}</div>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button style={{...S.iconBtn,fontSize:12,width:"auto",padding:"0 10px",color:"#4ade80"}} onClick={handleSave}>💾</button>
+          <button style={S.iconBtn} onClick={() => setPage("stats")}>📊</button>
+        </div>
+      </div>
+
+      {/* Category filter — wraps to 2 rows, no overflow */}
+      <div className="filter-scroll" style={{paddingBottom:6, flexShrink:0}}>
+        {CATEGORIES.map(c => (
+          <button key={c} style={{...S.pill, background:selCat===c?(CAT_COLORS[c]||"#10B981"):"#1e293b", color:selCat===c?"#fff":"#94a3b8"}}
+            onClick={() => setSelCat(c)}>{c}</button>
+        ))}
+        <button style={{...S.pill, background:examOnly?"#d97706":"#1e293b", color:examOnly?"#fff":"#94a3b8"}}
+          onClick={() => setExamOnly(f=>!f)}>⚡ Exam</button>
+      </div>
+
+      <div style={S.pTrack}><div style={{...S.pFill, width:`${progress}%`}}/></div>
+
+      {cur ? (
+        <div className="card-area no-select">
+          <div className={`card${flipped?" flipped":""}`}>
+            <div className="face face-front">
+              <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:8}}>
+                <span style={{...S.catTag, background:CAT_COLORS[cur.category]||"#555", marginBottom:0}}>{cur.category}</span>
+                <span style={{...S.stdTag, marginBottom:0}}>{cur.standard}</span>
+                {cur.exam && <span style={{...S.examTag, marginBottom:0}}>⚡ EXAM Q</span>}
+                {known.has(cur.id) && <span style={{fontSize:10, color:"#22c55e", background:"rgba(34,197,94,0.1)", padding:"2px 8px", borderRadius:20, fontFamily:"Arial,sans-serif", fontWeight:700}}>✓ Known</span>}
+              </div>
+              <div style={S.question}>{cur.front}</div>
+            </div>
+            <div className="face face-back">
+              <div style={{...S.catTag, background:CAT_COLORS[cur.category]||"#555"}}>Answer</div>
+              <div style={S.answer}>{cur.back}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={S.emptyState}>
+          <div style={{fontSize:48}}>🎉</div>
+          <div style={{color:"#fff", fontSize:18, fontWeight:700, marginTop:12}}>All Done!</div>
+          <div style={{color:"#94a3b8", fontSize:14, marginTop:6, fontFamily:"Arial,sans-serif"}}>You've reviewed all cards in this set</div>
+          <button style={{...S.mainBtn, marginTop:24}} onClick={() => { setIdx(0); setFlipped(false); }}>Restart</button>
+        </div>
+      )}
+
+      {flipped && cur && (
+        <div style={S.actionRow}>
+          <button style={S.noBtn} onClick={(e)=>{ e.stopPropagation(); mark("dontknow"); }}>
+            <span style={{fontSize:20}}>🔁</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Review Again</span>
+          </button>
+          <button style={S.yesBtn} onClick={(e)=>{ e.stopPropagation(); mark("know"); }}>
+            <span style={{fontSize:20}}>✅</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Got It!</span>
+          </button>
+        </div>
+      )}
+
+      <div style={S.navRow}>
+        <button style={{...S.navBtn, opacity:idx===0?0.3:1}} onClick={() => go(-1)} disabled={idx===0}>‹ Prev</button>
+        <button style={S.shuffleBtn} onClick={() => setShuffled(s=>!s)}>{shuffled?"🔀 Shuffled":"🔀 Shuffle"}</button>
+        <button style={{...S.navBtn, opacity:idx>=deck.length-1?0.3:1}} onClick={() => go(1)} disabled={idx>=deck.length-1}>Next ›</button>
+      </div>
+
+      {cur && (
+        <div style={{padding:"0 20px 8px", width:"100%", paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+          <button onClick={() => setFlipped(f=>!f)} style={S.revealBtn}>
+            {flipped ? "↑ BACK TO QUESTION" : "TAP TO REVEAL ANSWER ↓"}
+          </button>
+        </div>
+      )}
+      {toast && (
+        <div style={{position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",background:"#0f172a",border:"1px solid #22c55e",color:"#4ade80",padding:"10px 22px",borderRadius:14,fontFamily:"Arial,sans-serif",fontSize:13,fontWeight:700,zIndex:999,pointerEvents:"none",boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}}>
+          ✅ {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
