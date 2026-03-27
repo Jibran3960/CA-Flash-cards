@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>CA Finals · Flashcards</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    body {
+      background: #0A0F1E;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #root { height: 100%; }
+    ::-webkit-scrollbar { display: none; }
+    .card-area {
+      width: calc(100% - 40px);
+      margin: 0 20px;
+      height: 390px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .card { width: 100%; height: 100%; position: relative; border-radius: 20px; }
+    .card.flipped .face-front { opacity: 0; pointer-events: none; }
+    .card.flipped .face-back  { opacity: 1; pointer-events: auto; }
+    .face {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px; padding: 16px 20px;
+      display: flex; flex-direction: column; border: 1px solid;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      transition: opacity 0.3s ease;
+    }
+    .face-front {
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      border-color: #312e81; opacity: 1; pointer-events: auto; z-index: 2;
+    }
+    .face-back {
+      background: linear-gradient(145deg, #0f1929 0%, #0c1a0f 100%);
+      border-color: #14532d; opacity: 0; pointer-events: none; z-index: 1;
+    }
+    .filter-scroll { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 20px; }
+    .no-select { -webkit-user-select: none; user-select: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #1e293b; border-top-color: #6366f1;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ── CONFIG ─────────────────────────────────────────────────────────────
+// Fetches CA_Cards_Data.js from the same folder — works on any host
+const DATA_URL     = './CA_Cards_Data.js';
+const CACHE_KEY    = 'ca_cards_cache_v1';
+const PROGRESS_KEY = 'ca_progress_v1';
+
+// ── STORAGE ────────────────────────────────────────────────────────────
+function loadCache()    { try { return localStorage.getItem(CACHE_KEY) || null; } catch(e) { return null; } }
+function saveCache(raw) { try { localStorage.setItem(CACHE_KEY, raw); }          catch(e) {} }
+function loadProgress() {
+  try { const r = localStorage.getItem(PROGRESS_KEY); return r ? JSON.parse(r) : { known:[], unknown:[] }; }
+  catch(e) { return { known:[], unknown:[] }; }
+}
+function saveProgress(known, unknown) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify({ known:[...known], unknown:[...unknown] })); } catch(e) {}
+}
+
+// ── PARSER ─────────────────────────────────────────────────────────────
+function parseCards(raw) {
+  try {
+    const fn = new Function('"use strict"; return [' + raw + '];');
+    const result = fn();
+    return (Array.isArray(result) && result.length > 0) ? result : null;
+  } catch(e) { return null; }
+}
+
+// ── CONSTANTS ──────────────────────────────────────────────────────────
+const CATEGORIES  = ["All","Concept","Formula","Theory Q&A","Quick Fire","Practical"];
+const CAT_COLORS  = { Concept:"#3B82F6", Formula:"#8B5CF6", Practical:"#F59E0B", "Theory Q&A":"#10B981", "Quick Fire":"#EF4444" };
+const DIFF_COLORS = { Basic:"#22C55E", Intermediate:"#F59E0B", Advanced:"#EF4444" };
+const PALETTE     = ["#6366f1","#3B82F6","#8B5CF6","#10B981","#059669","#F59E0B","#EF4444","#EC4899","#14B8A6","#F97316"];
+const KNOWN_COLORS = {
+  "Ind AS 2":"#6366f1","Ind AS 36":"#6366f1","Ind AS 105":"#6366f1",
+  "Ind AS 16":"#3B82F6","Ind AS 38":"#8B5CF6","Ind AS 40":"#10B981",
+  "Ind AS 41":"#059669","Ind AS 102":"#14B8A6",
+  "Portfolio Management":"#F59E0B","Mutual Funds":"#EF4444"
+};
+const getStdColor = (std, i) => KNOWN_COLORS[std] || PALETTE[i % PALETTE.length];
+const getSubjColor = subj  => subj === "AFM" ? "#f59e0b" : "#6366f1";
+
+// ── STYLES ─────────────────────────────────────────────────────────────
+const S = {
+  page:       { minHeight:"100dvh", background:"#0A0F1E", display:"flex", flexDirection:"column", alignItems:"center", maxWidth:430, margin:"0 auto", overflowX:"hidden", paddingTop:"env(safe-area-inset-top,0px)" },
+  wrap:       { width:"100%", padding:"20px 20px 40px", display:"flex", flexDirection:"column", alignItems:"center", paddingBottom:"calc(40px + env(safe-area-inset-bottom,0px))" },
+  header:     { width:"100%", background:"linear-gradient(135deg,#1e1b4b 0%,#0f172a 100%)", borderRadius:20, padding:"24px 20px 20px", textAlign:"center", border:"1px solid #312e81", marginBottom:20 },
+  badge:      { background:"#312e81", color:"#a5b4fc", fontSize:10, fontFamily:"Arial,sans-serif", letterSpacing:2, padding:"4px 12px", borderRadius:20, display:"inline-block", marginBottom:10 },
+  title:      { color:"#fff", fontSize:26, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
+  subtitle:   { color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", marginBottom:18 },
+  statsRow:   { display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" },
+  divider:    { width:"100%", display:"flex", alignItems:"center", gap:10, margin:"14px 0 8px" },
+  divLine:    { flex:1, height:1, background:"#1e293b" },
+  divLabel:   { fontSize:11, fontFamily:"Arial,sans-serif", letterSpacing:2, fontWeight:700 },
+  stdGrid:    { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, width:"100%", marginBottom:8 },
+  stdCard:    { background:"#0f172a", border:"1.5px solid", borderRadius:14, padding:"12px", textAlign:"left", cursor:"pointer", display:"flex", flexDirection:"column", gap:3, WebkitAppearance:"none" },
+  stdDot:     { width:7, height:7, borderRadius:"50%", marginBottom:3 },
+  stdName:    { color:"#e2e8f0", fontSize:12, fontWeight:700, fontFamily:"Arial,sans-serif", lineHeight:1.3 },
+  stdCnt:     { color:"#64748b", fontSize:11, fontFamily:"Arial,sans-serif" },
+  btn:        { width:"100%", color:"#fff", border:"none", borderRadius:14, padding:"14px", fontSize:14, fontWeight:700, fontFamily:"Arial,sans-serif", cursor:"pointer", letterSpacing:0.5, marginTop:7, WebkitAppearance:"none" },
+  outBtn:     { background:"transparent", border:"1.5px solid #6366f1", color:"#a5b4fc" },
+  amberBtn:   { background:"linear-gradient(135deg,#d97706,#f59e0b)" },
+  grayBtn:    { background:"transparent", border:"1.5px solid #334155", color:"#64748b", fontSize:12 },
+  greenBtn:   { background:"linear-gradient(135deg,#059669,#10b981)" },
+  backBtn:    { color:"#94a3b8", background:"none", border:"none", fontSize:15, cursor:"pointer", alignSelf:"flex-start", fontFamily:"Arial,sans-serif", padding:"8px 0", marginBottom:8 },
+  statsRow3:  { display:"flex", gap:12, marginTop:8, marginBottom:14, width:"100%" },
+  statBlock:  { flex:1, background:"#0f172a", borderRadius:16, padding:"16px 10px", textAlign:"center" },
+  bigNum:     { fontSize:32, fontWeight:700 },
+  bigLbl:     { color:"#94a3b8", fontSize:12, fontFamily:"Arial,sans-serif", marginTop:4 },
+  pBarWrap:   { width:"100%", height:8, background:"#1e293b", borderRadius:4, overflow:"hidden" },
+  topBar:     { width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px 8px", background:"#0A0F1E", position:"sticky", top:0, zIndex:10, flexShrink:0 },
+  iconBtn:    { background:"#1e293b", border:"none", borderRadius:10, width:38, height:38, fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", WebkitAppearance:"none" },
+  diffBadge:  { fontSize:10, color:"#000", padding:"2px 8px", borderRadius:10, fontWeight:700, fontFamily:"Arial,sans-serif" },
+  pill:       { border:"none", borderRadius:20, padding:"6px 14px", fontSize:12, fontFamily:"Arial,sans-serif", cursor:"pointer", whiteSpace:"nowrap", fontWeight:600, flexShrink:0, WebkitAppearance:"none" },
+  pTrack:     { width:"calc(100% - 40px)", height:3, background:"#1e293b", borderRadius:2, overflow:"hidden", margin:"0 20px 10px", flexShrink:0 },
+  pFill:      { height:"100%", background:"linear-gradient(90deg,#6366f1,#8B5CF6)", borderRadius:2, transition:"width 0.3s" },
+  pBarFill:   { height:"100%", borderRadius:4, transition:"width 0.4s" },
+  catTag:     { fontSize:11, color:"#fff", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:10, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:0.5, flexShrink:0 },
+  examTag:    { fontSize:11, color:"#fbbf24", background:"#1c1200", border:"1px solid #d97706", padding:"3px 10px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  stdTag:     { fontSize:10, padding:"2px 8px", borderRadius:20, display:"inline-block", marginBottom:8, alignSelf:"flex-start", fontFamily:"Arial,sans-serif", fontWeight:700, flexShrink:0 },
+  question:   { color:"#e2e8f0", fontSize:15, lineHeight:1.6, flex:1, display:"flex", alignItems:"flex-start", whiteSpace:"pre-line", fontFamily:"Georgia,serif" },
+  answer:     { color:"#d1fae5", fontSize:12.5, lineHeight:1.75, whiteSpace:"pre-line", fontFamily:"Arial,sans-serif", flex:1 },
+  actionRow:  { display:"flex", gap:12, width:"calc(100% - 40px)", margin:"10px 0 4px", flexShrink:0 },
+  noBtn:      { flex:1, background:"#1c0a0a", border:"1.5px solid #EF4444", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  yesBtn:     { flex:1, background:"#0a1c0a", border:"1.5px solid #22C55E", borderRadius:14, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", WebkitAppearance:"none" },
+  navRow:     { display:"flex", alignItems:"center", justifyContent:"space-between", width:"calc(100% - 40px)", margin:"8px 0 4px", gap:8, flexShrink:0 },
+  navBtn:     { background:"#1e293b", color:"#94a3b8", border:"none", borderRadius:10, padding:"10px 16px", fontSize:14, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, WebkitAppearance:"none" },
+  shuffleBtn: { background:"#1e293b", color:"#a5b4fc", border:"1px solid #312e81", borderRadius:10, padding:"10px 14px", fontSize:12, cursor:"pointer", fontFamily:"Arial,sans-serif", fontWeight:600, flex:1, WebkitAppearance:"none" },
+  emptyState: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 20px", width:"100%" },
+  revealBtn:  { width:"100%", padding:"12px", borderRadius:12, border:"1px solid #4f46e5", background:"rgba(99,102,241,0.15)", color:"#a5b4fc", fontSize:13, fontFamily:"Arial,sans-serif", fontWeight:700, letterSpacing:"0.5px", cursor:"pointer" },
+};
+
+// ── SMALL COMPONENTS ───────────────────────────────────────────────────
+function StatPill({ num, lbl, color="#a5b4fc" }) {
+  return (
+    <div style={{ background:"#1e293b", borderRadius:12, padding:"8px 14px", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+      <span style={{color, fontSize:20, fontWeight:700}}>{num}</span>
+      <span style={{color:"#64748b", fontSize:11, fontFamily:"Arial,sans-serif"}}>{lbl}</span>
+    </div>
+  );
+}
+
+function LoadingScreen({ message }) {
+  return (
+    <div style={{...S.page, justifyContent:"center", alignItems:"center", gap:20}}>
+      <div className="spinner" />
+      <div style={{color:"#64748b", fontSize:13, fontFamily:"Arial,sans-serif"}}>{message}</div>
+    </div>
+  );
+}
+
+function ErrorScreen({ onRetry, cached, onUseCache }) {
+  return (
+    <div style={S.page}>
+      <div style={S.wrap}>
+        <div style={{...S.header, marginTop:40}}>
+          <div style={{fontSize:40, marginBottom:12}}>⚠️</div>
+          <div style={S.title}>Can't Load Cards</div>
+          <div style={S.subtitle}>Could not fetch card data from GitHub</div>
+        </div>
+        <div style={{width:"100%", background:"#0f172a", borderRadius:16, padding:"18px", marginBottom:8}}>
+          <div style={{color:"#94a3b8", fontSize:13, fontFamily:"Arial,sans-serif", lineHeight:1.8}}>
+            Make sure both files are pushed to your GitHub repo:<br/>
+            <code style={{color:"#a5b4fc", fontSize:12}}>CA_Flashcard_Engine.html</code><br/>
+            <code style={{color:"#a5b4fc", fontSize:12}}>CA_Cards_Data.js</code><br/><br/>
+            Then open the GitHub Pages URL in Safari.
+          </div>
+        </div>
+        {cached && (
+          <button style={{...S.btn, ...S.greenBtn}} onClick={onUseCache}>
+            📦 Use Saved Cards (Offline Mode)
+          </button>
+        )}
+        <button style={{...S.btn, background:"linear-gradient(135deg,#6366f1,#8B5CF6)"}} onClick={onRetry}>
+          🔄 Try Again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN FLASHCARD APP ─────────────────────────────────────────────────
+function FlashcardApp({ cards, onRefresh }) {
+  const saved = loadProgress();
+  const [page, setPage]             = useState("home");
+  const [deck, setDeck]             = useState(cards);
+  const [deckLabel, setDeckLabel]   = useState("All Cards");
+  const [selCat, setSelCat]         = useState("All");
+  const [examOnly, setExamOnly]     = useState(false);
+  const [filteredDeck, setFiltered] = useState(cards);
+  const [idx, setIdx]               = useState(0);
+  const [flipped, setFlipped]       = useState(false);
+  const [known, setKnown]           = useState(() => new Set(saved.known));
+  const [unknown, setUnknown]       = useState(() => new Set(saved.unknown));
+  const [shuffled, setShuffled]     = useState(false);
+  const [toast, setToast]           = useState("");
+  const touchX = useRef(null);
+  const touchY = useRef(null);
+
+  // Auto-detect subjects → standards from card data
+  const subjects = useMemo(() => {
+    const map = {};
+    cards.forEach(c => {
+      const subj = c.subject || "Other";
+      if (!map[subj]) map[subj] = [];
+      if (!map[subj].includes(c.standard)) map[subj].push(c.standard);
+    });
+    return map;
+  }, [cards]);
+
+  const stdColorIdx = useMemo(() => {
+    const m = {}; let i = 0;
+    Object.values(subjects).forEach(stds => stds.forEach(s => { m[s] = i++; }));
+    return m;
+  }, [subjects]);
+
+  useEffect(() => {
+    let f = deck;
+    if (selCat !== "All") f = f.filter(c => c.category === selCat);
+    if (examOnly)         f = f.filter(c => c.exam);
+    if (shuffled)         f = [...f].sort(() => Math.random() - 0.5);
+    setFiltered(f); setIdx(0); setFlipped(false);
+  }, [deck, selCat, examOnly, shuffled]);
+
+  useEffect(() => { saveProgress(known, unknown); }, [known, unknown]);
+
+  const cur      = filteredDeck[idx] || null;
+  const progress = filteredDeck.length ? Math.round((idx / filteredDeck.length) * 100) : 0;
+
+  const go = dir => {
+    setFlipped(false);
+    setTimeout(() => {
+      setIdx(i => {
+        if (dir === 1  && i < filteredDeck.length - 1) return i + 1;
+        if (dir === -1 && i > 0) return i - 1;
+        return i;
+      });
+    }, 80);
+  };
+
+  const showToast  = msg => { setToast(msg); setTimeout(() => setToast(""), 2200); };
+  const handleSave = ()  => { saveProgress(known, unknown); showToast("Progress saved!"); };
+
+  const mark = type => {
+    if (!cur) return;
+    if (type === "know") {
+      setKnown(s => new Set([...s, cur.id]));
+      setUnknown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    } else {
+      setUnknown(s => new Set([...s, cur.id]));
+      setKnown(s => { const n = new Set(s); n.delete(cur.id); return n; });
+    }
+    go(1);
+  };
+
+  const startStudy = (subset, label, examOnlyMode) => {
+    setDeck(subset); setDeckLabel(label);
+    setSelCat("All"); setExamOnly(examOnlyMode || false);
+    setShuffled(false); setIdx(0); setFlipped(false);
+    setPage("study");
+  };
+
+  const onTouchStart = e => { touchX.current = e.touches[0].clientX; touchY.current = e.touches[0].clientY; };
+  const onTouchEnd   = e => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    touchX.current = null;
+    if (Math.abs(dx) < 50 || dy > Math.abs(dx) * 0.6) return;
+    dx < 0 ? go(1) : go(-1);
+  };
+
+  // ── HOME ────────────────────────────────────────────────────────────
+  if (page === "home") {
+    const totalExam = cards.filter(c => c.exam).length;
+    const subjList  = Object.keys(subjects);
+    return (
+      <div style={S.page}>
+        <div style={S.wrap}>
+          <div style={S.header}>
+            <div style={S.badge}>CA FINALS · GROUP I</div>
+            <div style={S.title}>CA Flashcards</div>
+            <div style={S.subtitle}>{subjList.join(" · ")}</div>
+            <div style={S.statsRow}>
+              <StatPill num={cards.length} lbl="Cards" />
+              <StatPill num={totalExam}    lbl="Exam Qs" />
+              <StatPill num={known.size}   lbl="Mastered" color="#22C55E" />
+            </div>
+          </div>
+
+          {subjList.map(subj => {
+            const subjCards = cards.filter(c => (c.subject || "Other") === subj);
+            const stdList   = subjects[subj];
+            const isAFM     = subj === "AFM";
+            return (
+              <React.Fragment key={subj}>
+                <div style={S.divider}>
+                  <div style={S.divLine} />
+                  <span style={{...S.divLabel, color: getSubjColor(subj)}}>{subj}</span>
+                  <div style={S.divLine} />
+                </div>
+                <div style={S.stdGrid}>
+                  {stdList.map(std => {
+                    const stdCards = subjCards.filter(c => c.standard === std);
+                    const examCnt  = stdCards.filter(c => c.exam).length;
+                    const color    = getStdColor(std, stdColorIdx[std]);
+                    return (
+                      <button key={std} style={{...S.stdCard, borderColor: color}}
+                        onClick={() => startStudy(stdCards, std, false)}>
+                        <div style={{...S.stdDot, background: color}} />
+                        <div style={S.stdName}>{std}</div>
+                        <div style={S.stdCnt}>{stdCards.length} cards · {examCnt} exam</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  style={{...S.btn, ...(isAFM ? S.amberBtn : {background:"linear-gradient(135deg,#6366f1,#8B5CF6)"})}}
+                  onClick={() => startStudy(subjCards, `All ${subj} Cards`, false)}>
+                  Study All {subj} ({subjCards.length} Cards) →
+                </button>
+              </React.Fragment>
+            );
+          })}
+
+          <button style={{...S.btn, ...S.outBtn, marginTop:14}}
+            onClick={() => startStudy(cards, "Exam Questions", true)}>
+            ⚡ Exam Questions Only
+          </button>
+          <button style={{...S.btn, background:"linear-gradient(135deg,#1e293b,#334155)"}}
+            onClick={() => startStudy(cards, "All Cards", false)}>
+            Study Everything ({cards.length} Cards)
+          </button>
+          <button style={{...S.btn, background:"transparent", border:"1.5px solid #334155", color:"#94a3b8"}}
+            onClick={() => setPage("stats")}>
+            📊 View Progress
+          </button>
+          <button style={{...S.btn, ...S.grayBtn}} onClick={onRefresh}>
+            🔄 Refresh Cards from GitHub
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STATS ────────────────────────────────────────────────────────────
+  if (page === "stats") {
+    const total = cards.length;
+    const pct   = Math.round(known.size / total * 100);
+    return (
+      <div style={S.page}>
+        <div style={S.wrap}>
+          <button style={S.backBtn} onClick={() => setPage("home")}>← Back</button>
+          <div style={{...S.title, marginBottom:20}}>Your Progress</div>
+          <div style={S.statsRow3}>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#22C55E"}}>{known.size}</div><div style={S.bigLbl}>✅ Know It</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#EF4444"}}>{unknown.size}</div><div style={S.bigLbl}>🔁 Review</div></div>
+            <div style={S.statBlock}><div style={{...S.bigNum, color:"#64748b"}}>{total - known.size - unknown.size}</div><div style={S.bigLbl}>⏳ Unseen</div></div>
+          </div>
+          <div style={S.pBarWrap}>
+            <div style={{...S.pBarFill, width:`${pct}%`, background:"linear-gradient(90deg,#22C55E,#86efac)"}} />
+          </div>
+          <div style={{color:"#94a3b8", textAlign:"center", fontSize:13, marginTop:8, fontFamily:"Arial,sans-serif", marginBottom:24}}>
+            {pct}% mastered · {total} total cards
+          </div>
+          {unknown.size > 0 && (
+            <button style={{...S.btn, background:"linear-gradient(135deg,#6366f1,#8B5CF6)"}}
+              onClick={() => startStudy(cards.filter(c => unknown.has(c.id)), "Weak Cards", false)}>
+              🔁 Review Weak Cards ({unknown.size})
+            </button>
+          )}
+          <button style={{...S.btn, ...S.outBtn, marginTop:8}}
+            onClick={() => { if(window.confirm("Reset all progress?")) { setKnown(new Set()); setUnknown(new Set()); } }}>
+            Reset Progress
+          </button>
+          <button style={{...S.btn, ...S.greenBtn, marginTop:8}} onClick={handleSave}>
+            💾 Save Progress Now
+          </button>
+          <button style={{...S.btn, background:"transparent", border:"1.5px solid #334155", color:"#94a3b8", marginTop:8}}
+            onClick={() => setPage("home")}>
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STUDY ────────────────────────────────────────────────────────────
+  return (
+    <div style={S.page} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div style={S.topBar}>
+        <button style={S.iconBtn} onClick={() => setPage("home")}>🏠</button>
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:3}}>
+          <div style={{color:"#e2e8f0", fontSize:12, fontWeight:600, fontFamily:"Arial,sans-serif", maxWidth:170, textAlign:"center", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis"}}>
+            {deckLabel}
+          </div>
+          <div style={{color:"#64748b", fontSize:11, fontFamily:"Arial,sans-serif"}}>{idx+1} / {filteredDeck.length}</div>
+        </div>
+        <div style={{display:"flex", gap:6}}>
+          <button style={{...S.iconBtn, fontSize:12, width:"auto", padding:"0 10px", color:"#4ade80"}} onClick={handleSave}>💾</button>
+          <button style={S.iconBtn} onClick={() => setPage("stats")}>📊</button>
+        </div>
+      </div>
+
+      {/* Category filter — flex-wrap prevents overflow (Safari fix) */}
+      <div className="filter-scroll" style={{paddingBottom:6, flexShrink:0}}>
+        {CATEGORIES.map(c => (
+          <button key={c}
+            style={{...S.pill, background: selCat===c ? (CAT_COLORS[c]||"#3B82F6") : "#1e293b", color: selCat===c ? "#fff" : "#94a3b8"}}
+            onClick={() => setSelCat(c)}>{c}
+          </button>
+        ))}
+        <button
+          style={{...S.pill, background: examOnly ? "#d97706" : "#1e293b", color: examOnly ? "#fff" : "#94a3b8"}}
+          onClick={() => setExamOnly(f => !f)}>
+          ⚡ Exam
+        </button>
+      </div>
+
+      <div style={S.pTrack}><div style={{...S.pFill, width:`${progress}%`}} /></div>
+
+      {cur ? (
+        <div className="card-area no-select">
+          <div className={`card${flipped ? " flipped" : ""}`}>
+            <div className="face face-front">
+              <div style={{display:"flex", gap:5, flexWrap:"wrap", marginBottom:8}}>
+                <span style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555", marginBottom:0}}>
+                  {cur.category}
+                </span>
+                {cur.standard && (() => {
+                  const color = getStdColor(cur.standard, stdColorIdx[cur.standard]);
+                  return (
+                    <span style={{...S.stdTag, color, background:`${color}18`, border:`1px solid ${color}40`, marginBottom:0}}>
+                      {cur.standard}
+                    </span>
+                  );
+                })()}
+                {cur.exam && <span style={{...S.examTag, marginBottom:0}}>⚡ EXAM Q</span>}
+                {known.has(cur.id) && (
+                  <span style={{fontSize:10, color:"#22c55e", background:"rgba(34,197,94,0.1)", padding:"2px 8px", borderRadius:20, fontFamily:"Arial,sans-serif", fontWeight:700}}>
+                    ✓ Known
+                  </span>
+                )}
+              </div>
+              <div style={{...S.question, alignItems:"flex-start"}}>{cur.front}</div>
+            </div>
+            <div className="face face-back">
+              <div style={{...S.catTag, background: CAT_COLORS[cur.category]||"#555"}}>Answer</div>
+              <div style={S.answer}>{cur.back}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={S.emptyState}>
+          <div style={{fontSize:48}}>🎉</div>
+          <div style={{color:"#fff", fontSize:18, fontWeight:700, marginTop:12}}>All Done!</div>
+          <div style={{color:"#94a3b8", fontSize:14, marginTop:6, fontFamily:"Arial,sans-serif"}}>
+            You've reviewed all cards in this set
+          </div>
+          <button style={{...S.btn, width:"auto", padding:"12px 32px", background:"linear-gradient(135deg,#6366f1,#8B5CF6)", marginTop:24}}
+            onClick={() => { setIdx(0); setFlipped(false); }}>
+            Restart
+          </button>
+        </div>
+      )}
+
+      {flipped && cur && (
+        <div style={S.actionRow}>
+          <button style={S.noBtn} onClick={e => { e.stopPropagation(); mark("dontknow"); }}>
+            <span style={{fontSize:20}}>🔁</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Review Again</span>
+          </button>
+          <button style={S.yesBtn} onClick={e => { e.stopPropagation(); mark("know"); }}>
+            <span style={{fontSize:20}}>✅</span>
+            <span style={{color:"#e2e8f0", fontSize:12, fontFamily:"Arial,sans-serif", fontWeight:600}}>Got It!</span>
+          </button>
+        </div>
+      )}
+
+      <div style={S.navRow}>
+        <button style={{...S.navBtn, opacity:idx===0 ? 0.3:1}} onClick={() => go(-1)} disabled={idx===0}>‹ Prev</button>
+        <button style={S.shuffleBtn} onClick={() => setShuffled(s => !s)}>{shuffled ? "🔀 Shuffled" : "🔀 Shuffle"}</button>
+        <button style={{...S.navBtn, opacity:idx>=filteredDeck.length-1 ? 0.3:1}} onClick={() => go(1)} disabled={idx>=filteredDeck.length-1}>Next ›</button>
+      </div>
+
+      {cur && (
+        <div style={{padding:"0 20px 8px", width:"100%", paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+          <button onClick={() => setFlipped(f => !f)} style={S.revealBtn}>
+            {flipped ? "↑ BACK TO QUESTION" : "TAP TO REVEAL ANSWER ↓"}
+          </button>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{position:"fixed", bottom:90, left:"50%", transform:"translateX(-50%)", background:"#0f172a", border:"1px solid #22c55e", color:"#4ade80", padding:"10px 22px", borderRadius:14, fontFamily:"Arial,sans-serif", fontSize:13, fontWeight:700, zIndex:999, pointerEvents:"none", boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}}>
+          ✅ {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ROOT — FETCH ORCHESTRATOR ──────────────────────────────────────────
+function Root() {
+  const [state, setState] = useState("loading"); // loading | ready | error
+  const [cards, setCards] = useState(null);
+
+  const fetchCards = async () => {
+    setState("loading");
+    try {
+      const res = await fetch(DATA_URL + "?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const raw = await res.text();
+      const parsed = parseCards(raw);
+      if (!parsed) throw new Error("Parse failed");
+      saveCache(raw);
+      setCards(parsed);
+      setState("ready");
+    } catch(e) {
+      // Try cache before showing error
+      const cached = loadCache();
+      if (cached) {
+        const parsed = parseCards(cached);
+        if (parsed) { setCards(parsed); setState("ready"); return; }
+      }
+      setState("error");
+    }
+  };
+
+  useEffect(() => { fetchCards(); }, []);
+
+  if (state === "loading") return <LoadingScreen message="Loading cards from GitHub…" />;
+
+  if (state === "error") {
+    const cached = loadCache();
+    return (
+      <ErrorScreen
+        onRetry={fetchCards}
+        cached={!!cached}
+        onUseCache={() => {
+          const parsed = parseCards(loadCache());
+          if (parsed) { setCards(parsed); setState("ready"); }
+        }}
+      />
+    );
+  }
+
+  return <FlashcardApp cards={cards} onRefresh={fetchCards} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root />);
+</script>
+</body>
+</html>
